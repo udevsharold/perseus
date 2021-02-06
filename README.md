@@ -37,6 +37,7 @@ It'll automatically lock your iPhone, configurable in settings.
 For iOS version lower than that, it'll automatically fall to Apple Watch authentication when your face is in view. All those conditions above still apply, except the face mask bit.
 
 **Will it works with TouchID devices?**
+
 NO.
 ## Compatibility
 Support X series iPhone on iOS 13+. This package tested to be working on iPhone X iOS 13.5, and with Apple Watch S5 on watchOS 6.2.8. Might or might not work on different combinations.
