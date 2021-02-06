@@ -14,11 +14,11 @@ Only on iOS 13.5, Face ID able to detect if you're wearing a mask, and Persues w
 
 **What if my dog is wearing a mask, and I'm near him?**
 
-It'll still try to authenticates with your Apple Watch, given your dog is on your lap, your dog will probably able to snoop your phone (hide that cookie picture!). It can detects a face with a mask, but not who it belong to. I think Apple's current implementation also facing this issue, as can be seen on r/iOSBeta. I'm sure Apple's implementation will gets better over time.
+It'll still try to authenticates with your Apple Watch, given your dog is on your lap, your dog will probably able to snoop your phone (hide that cookie picture!). It can detects a face with a mask, but not who it belongs to. I think Apple's current implementation also facing this issue, as can be seen on r/iOSBeta. I'm sure Apple's implementation will gets better over time.
 
 **What if I don't wear a mask?**
 
-Bad boy! Wear a mask! On the serious note, iOS 13.5 and above **will not** use your Apple Watch to authenticated. Lower iOS version will (that's the con of this tweak on lower iOS version).
+Bad boy! Wear a mask! On the serious note, iOS 13.5 and above **will not** use your Apple Watch to authenticates. Lower iOS version will (that's the con of this tweak on lower iOS version).
 
 **How near is near?**
 

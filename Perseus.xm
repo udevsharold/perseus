@@ -156,15 +156,15 @@ static void gizmoStateChanged(){
             BOOL onWrist = xpc_dictionary_get_int64(reply, "pairedWatchWristState") == 3;
             BOOL securelyUnlocked = xpc_dictionary_get_int64(reply, "pairedWatchLockState") == 0;
             
+            //Auto lock iPhone if AW not on wrist or locked
+            if (autoLockIPhone && perseus && harpe && (lastOnWrist && !onWrist) && (lastSecurelyUnlocked && !securelyUnlocked)){
+                [((SpringBoard *)[%c(SpringBoard) sharedApplication]) _simulateLockButtonPress];
+            }
+            
             //Revoke token
             if (!onWrist || !securelyUnlocked){
                 perseus = nil;
                 harpe = nil;
-            }
-            
-            //Auto lock iPhone if AW not on wrist or locked
-            if (autoLockIPhone && (lastOnWrist && !onWrist) && (lastSecurelyUnlocked && !securelyUnlocked)){
-                [((SpringBoard *)[%c(SpringBoard) sharedApplication]) _simulateLockButtonPress];
             }
             
             lastOnWrist = onWrist;
