@@ -1,0 +1,8 @@
+{
+	Filter = {
+		Executables = (
+			SpringBoard,
+			sharingd,
+		);
+	};
+}

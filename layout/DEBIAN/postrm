@@ -1,0 +1,7 @@
+#!/bin/bash
+
+echo "Killing sharingd..."
+
+killall -9 sharingd || true
+
+exit 0
