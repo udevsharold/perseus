@@ -42,6 +42,10 @@ NO.
 ## Compatibility
 Support X series iPhone on iOS 13+. This package tested to be working on iPhone X iOS 13.5, and with Apple Watch S5 on watchOS 6.2.8. Might or might not work on different combinations.
 
+
+## Bonus
+Perseus is the one who beheaded Medusa in Greek mythology. Medusa is Apple's code name for Face ID.
+
 ## License
 All source code in this repository are licensed under GPLv3, unless stated otherwise.
 
