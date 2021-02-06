@@ -22,6 +22,8 @@ static xpc_object_t generalQueriesMessage(){
     
     xpc_dictionary_set_value(message, kPerseusQuery, queries);
     
+    xpc_release(queries);
+    
     return message;
 }
 
@@ -34,6 +36,8 @@ static xpc_object_t InvalidateRSSIMessage(){
     xpc_array_set_bool(queries, ((size_t)(-1)), PSQueryTypeInvalidateRSSI);
     
     xpc_dictionary_set_value(message, kPerseusQuery, queries);
+    
+    xpc_release(queries);
     
     return message;
 }
