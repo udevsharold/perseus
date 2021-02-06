@@ -101,15 +101,13 @@ static NSString *harpe;
                     if (onWrist && securelyUnlocked && (rssi >= rssiThreshold && rssi < 0) && isNearby && isActive && isConnected && harpe){
                         NSError *error;
                         
-                        if (harpe){
-                            NSData *decryptedPerseus = [RNDecryptor decryptData:perseus withPassword:harpe error:&error];
-                            if (!error){
-                                NSString *passcode =  [[NSString alloc] initWithData:decryptedPerseus encoding:NSUTF8StringEncoding];
-                                SBLockScreenManager *lockScreenManager = [objc_getClass("SBLockScreenManager") sharedInstance];
-                                [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:NO completion:nil];
-                                lastOnWrist = onWrist;
-                                lastSecurelyUnlocked = securelyUnlocked;
-                            }
+                        NSData *decryptedPerseus = [RNDecryptor decryptData:perseus withPassword:harpe error:&error];
+                        if (!error){
+                            NSString *passcode =  [[NSString alloc] initWithData:decryptedPerseus encoding:NSUTF8StringEncoding];
+                            SBLockScreenManager *lockScreenManager = [objc_getClass("SBLockScreenManager") sharedInstance];
+                            [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:NO completion:nil];
+                            lastOnWrist = onWrist;
+                            lastSecurelyUnlocked = securelyUnlocked;
                         }
                     }
                     
