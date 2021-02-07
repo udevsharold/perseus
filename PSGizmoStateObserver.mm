@@ -19,12 +19,12 @@
 -(instancetype)init{
     if (self = [super init]){
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(wristStateChanged:) name:WRIST_STATE_CHANGED_NN object:nil];
-         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(lockStateChanged:) name:LOCK_STATE_CHANGED_NN object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(lockStateChanged:) name:LOCK_STATE_CHANGED_NN object:nil];
     }
     return self;
 }
 
-- (void)dealloc{
+-(void)dealloc{
     [[NSNotificationCenter defaultCenter] removeObserver:self name:WRIST_STATE_CHANGED_NN object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LOCK_STATE_CHANGED_NN object:nil];
 }

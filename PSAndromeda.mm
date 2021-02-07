@@ -25,7 +25,7 @@ static xpc_object_t generalQueriesMessage(){
     return message;
 }
 
-static xpc_object_t InvalidateRSSIMessage(){
+static xpc_object_t invalidateRSSIMessage(){
     xpc_object_t message = xpc_dictionary_create(NULL, NULL, 0);
     
     xpc_dictionary_set_bool(message, kPerseusEvent, YES);
@@ -38,7 +38,7 @@ static xpc_object_t InvalidateRSSIMessage(){
     return message;
 }
 
-static xpc_connection_t SDXPCConnection(){
+static xpc_connection_t sdXPCConnection(){
     xpc_connection_t connection =
     xpc_connection_create_mach_service("com.apple.sharingd.nsxpc", NULL, 0);
     xpc_connection_set_event_handler(connection, ^(xpc_object_t event) {
@@ -48,7 +48,7 @@ static xpc_connection_t SDXPCConnection(){
 }
 
 void sendPerseusQueryWithReply(xpc_object_t message, xpc_handler_t handler){
-    xpc_connection_t sdConnection = SDXPCConnection();
+    xpc_connection_t sdConnection = sdXPCConnection();
     if (sdConnection){
         
         xpc_connection_send_message_with_reply(sdConnection, message, dispatch_get_main_queue(), ^(xpc_object_t reply){
@@ -69,7 +69,7 @@ void sendGeneralPerseusQueryWithReply(xpc_handler_t handler){
 }
 
 void sendInvalidateRSSIPerseusQueryWithReply(xpc_handler_t handler){
-    sendPerseusQueryWithReply(InvalidateRSSIMessage(), handler);
+    sendPerseusQueryWithReply(invalidateRSSIMessage(), handler);
 }
 
 static void replyWithObject(xpc_object_t replyObject, xpc_object_t event){
@@ -92,9 +92,8 @@ void handlePerseusEvent(xpc_object_t event){
         
         SDStatusMonitor *statusMonitor = [objc_getClass("SDStatusMonitor") sharedMonitor];
         IDSService *service = [pairedDeviceAgent valueForKey:@"_idsService"];
-        NSPredicate *predicte = [NSPredicate predicateWithFormat:
-                                 @"SELF.isDefaultPairedDevice == 1"];
-        IDSDevice *defaultPairedDevice = [[service.devices filteredArrayUsingPredicate:predicte] firstObject];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF.isDefaultPairedDevice == 1"];
+        IDSDevice *defaultPairedDevice = [[service.devices filteredArrayUsingPredicate:predicate] firstObject];
         
         xpc_array_apply(queries, ^_Bool(size_t index, xpc_object_t value){
             xpc_type_t valueType = xpc_get_type(value);
