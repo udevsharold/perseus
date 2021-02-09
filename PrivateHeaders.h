@@ -4,6 +4,8 @@
 //  file 'LICENSE', which is part of this source code package.
 
 #import "Common.h"
+#import <Foundation/NSXPCConnection.h>
+#import <Foundation/NSXPCInterface.h>
 
 //SpringBoard
 @interface UISystemShellApplication : UIApplication
@@ -17,6 +19,17 @@
 +(id)sharedInstance;
 -(BOOL)_attemptUnlockWithPasscode:(id)arg1 mesa:(BOOL)arg2 finishUIUnlock:(BOOL)arg3 completion:(/*^block*/id)arg4 ;
 -(BOOL)isUILocked;
+-(BOOL)_shouldUnlockUIOnKeyDownEvent;
+@end
+
+@interface PTSettings : NSObject
+@end
+
+@interface CSLockScreenBiometricFailureSettings : PTSettings
+@property (assign,nonatomic) BOOL jiggleLock;
+@property (assign,nonatomic) BOOL vibrate;
+@property (assign,nonatomic) BOOL showPasscode;
+@property (assign,nonatomic) BOOL waitUntilButtonUp;
 @end
 
 //sharingd
@@ -99,3 +112,44 @@
 @property (nonatomic,retain) SFBLEDevice * bleDevice;
 @end
 
+//NanoAudioControl
+@protocol NACXPCInterface <NSObject>
+@required
+-(void)setHapticIntensity:(float)arg1;
+-(void)beginObservingVolumeForTarget:(id)arg1;
+-(void)beginObservingListeningModesForTarget:(id)arg1;
+-(void)beginObservingAudioRoutesForCategory:(id)arg1;
+-(void)endObservingVolumeForTarget:(id)arg1;
+-(void)endObservingListeningModesForTarget:(id)arg1;
+-(void)volumeValueForTarget:(id)arg1 result:(/*^block*/id)arg2;
+-(void)volumeControlAvailabilityForTarget:(id)arg1 result:(/*^block*/id)arg2;
+-(void)mutedStateForTarget:(id)arg1 result:(/*^block*/id)arg2;
+-(void)hapticState:(/*^block*/id)arg1;
+-(void)hapticIntensity:(/*^block*/id)arg1;
+-(void)prominentHapticEnabled:(/*^block*/id)arg1;
+-(void)systemMutedState:(/*^block*/id)arg1;
+-(void)EULimitForTarget:(id)arg1 result:(/*^block*/id)arg2;
+-(void)volumeWarningForTarget:(id)arg1 result:(/*^block*/id)arg2;
+-(void)setVolumeValue:(float)arg1 forTarget:(id)arg2;
+-(void)setMuted:(BOOL)arg1 forTarget:(id)arg2;
+-(void)setProminentHapticEnabled:(BOOL)arg1;
+-(void)setHapticState:(long long)arg1;
+-(void)setSystemMuted:(BOOL)arg1;
+-(void)availableListeningModesForTarget:(id)arg1 result:(/*^block*/id)arg2;
+-(void)currentListeningModeForTarget:(id)arg1 result:(/*^block*/id)arg2;
+-(void)setCurrentListeningMode:(id)arg1 forTarget:(id)arg2;
+-(void)audioRoutesForCategory:(id)arg1 result:(/*^block*/id)arg2;
+-(void)endObservingAudioRoutesForCategory:(id)arg1;
+-(void)pickAudioRouteWithIdentifier:(id)arg1 category:(id)arg2;
+-(void)playAudioAndHapticPreview;
+-(void)playDefaultHapticPreview;
+-(void)playProminentHapticPreview;
+@end
+
+// XPC
+@interface NSXPCConnection (Private)
+@property (copy) id interruptionHandler;
+@property (copy) id invalidationHandler;
+@property (retain,readonly) id remoteObjectProxy;
+- (void)invalidate;
+@end

@@ -6,7 +6,6 @@
 #import "PSAndromeda.h"
 #import "PrivateHeaders.h"
 
-
 static xpc_object_t generalQueriesMessage(){
     xpc_object_t message = xpc_dictionary_create(NULL, NULL, 0);
     

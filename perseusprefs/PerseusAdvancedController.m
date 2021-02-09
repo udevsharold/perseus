@@ -4,6 +4,7 @@
 //  file 'LICENSE', which is part of this source code package.
 
 #import "../Common.h"
+#import "../PSShared.h"
 #include "PerseusAdvancedController.h"
 
 @implementation PerseusAdvancedController
@@ -15,7 +16,7 @@
         
         //RSSI threshold
         PSSpecifier *rssiThresholdGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
-        [rssiThresholdGroupSpec setProperty:@"RSSI threshold for Apple Watch. The higher the value, the nearer it is to the iPhone. -60 is recommended value." forKey:@"footerText"];
+        [rssiThresholdGroupSpec setProperty:@"RSSI threshold for Apple Watch. The higher the value, the nearer it is to the iPhone. -60 is the recommended value." forKey:@"footerText"];
         [rootSpecifiers addObject:rssiThresholdGroupSpec];
         
         
@@ -45,9 +46,44 @@
         [autoLockIphoneSpec setProperty:PREFS_CHANGED_NN forKey:@"PostNotification"];
         [rootSpecifiers addObject:autoLockIphoneSpec];
         
+        //Disable failure vibration
+        PSSpecifier *bioFailureVibrationGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
+        [bioFailureVibrationGroupSpec setProperty:@"Disable FaceID failure vibration when Perseus is effective." forKey:@"footerText"];
+        [rootSpecifiers addObject:bioFailureVibrationGroupSpec];
+        
+        PSSpecifier *bioFailureVibrationSpec = [PSSpecifier preferenceSpecifierNamed:@"Disable Failure Vibration" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:nil cell:PSSwitchCell edit:nil];
+        [bioFailureVibrationSpec setProperty:@"Disable Failure Vibration" forKey:@"label"];
+        [bioFailureVibrationSpec setProperty:@"deferBioFailureVibration" forKey:@"key"];
+        [bioFailureVibrationSpec setProperty:@YES forKey:@"default"];
+        [bioFailureVibrationSpec setProperty:PERSEUS_IDENTIFIER forKey:@"defaults"];
+        [bioFailureVibrationSpec setProperty:PREFS_CHANGED_NN forKey:@"PostNotification"];
+        [rootSpecifiers addObject:bioFailureVibrationSpec];
+        
+        //Poke Gizmo
+        PSSpecifier *pokeTypeGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
+        [pokeTypeGroupSpec setProperty:@"Haptic feedback on Apple Watch." forKey:@"footerText"];
+        [rootSpecifiers addObject:pokeTypeGroupSpec];
+        
+        PSSpecifier *pokeTypeSpec = [PSSpecifier preferenceSpecifierNamed:@"Haptic Feedback" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:NSClassFromString(@"PSListItemsController") cell:PSLinkListCell edit:nil];
+        [pokeTypeSpec setProperty:NSClassFromString(@"PSLinkListCell") forKey:@"cellClass"];
+        [pokeTypeSpec setProperty:@"Haptic Feedback" forKey:@"label"];
+        [pokeTypeSpec setProperty:@(PSPokeGizmoTypeOnce) forKey:@"default"];
+        [pokeTypeSpec setValues:@[@0, @1, @2/*, @3. @4*/] titles:@[@"Disable", @"Once", @"Double (BETA)"/*, @"Default", @"Prominent"*/]];
+        [pokeTypeSpec setProperty:PERSEUS_IDENTIFIER forKey:@"defaults"];
+        [pokeTypeSpec setProperty:PREFS_CHANGED_NN forKey:@"PostNotification"];
+        [pokeTypeSpec setProperty:@"pokeType" forKey:@"key"];
+        [rootSpecifiers addObject:pokeTypeSpec];
+        
         _specifiers = rootSpecifiers;
     }
     
     return _specifiers;
+}
+
+-(void)setPreferenceValue:(id)value specifier:(PSSpecifier*)specifier{
+    [super setPreferenceValue:value specifier:specifier];
+    if ([specifier.properties[@"key"] isEqualToString:@"pokeType"]){
+        pokeGizmo([value intValue]);
+    }
 }
 @end

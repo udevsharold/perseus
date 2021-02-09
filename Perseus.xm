@@ -5,6 +5,7 @@
 
 #import "Perseus.h"
 #import "PSAndromeda.h"
+#import "PSShared.h"
 #import "PSGizmoStateObserver.h"
 #import "PrivateHeaders.h"
 
@@ -14,6 +15,9 @@ static BOOL lastSecurelyUnlocked;
 static BOOL screenOff;
 static long long rssiThreshold;
 static BOOL autoLockIPhone;
+static BOOL deferBioFailureVibration;
+static int pokeType;
+static BOOL unlockedWithPerseus;
 int64_t currentRssi;
 
 static NSData *perseus;
@@ -60,10 +64,15 @@ static NSString *harpe;
 -(BOOL)_attemptUnlockWithPasscode:(NSString *)passcode mesa:(BOOL)mesa finishUIUnlock:(BOOL)unlockUI completion:(/*^block*/id)completionHandler{
     BOOL success = %orig;
     
-    if (enabled && success && !mesa && passcode){
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            harpe = [[NSUUID UUID] UUIDString];
-            perseus = [RNEncryptor encryptData:[passcode dataUsingEncoding:NSUTF8StringEncoding] withSettings:kRNCryptorAES256Settings password:harpe error:nil];
+    if (enabled && success && !mesa && passcode && !perseus){
+        sendGeneralPerseusQueryWithReply(^(xpc_object_t reply){
+            BOOL onWrist = xpc_dictionary_get_int64(reply, "pairedWatchWristState") == 3;
+            if (onWrist){
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+                    harpe = [[NSUUID UUID] UUIDString];
+                    perseus = [RNEncryptor encryptData:[passcode dataUsingEncoding:NSUTF8StringEncoding] withSettings:kRNCryptorAES256Settings password:harpe error:nil];
+                });
+            }
         });
     }
     
@@ -105,7 +114,16 @@ static NSString *harpe;
                         if (!error){
                             NSString *passcode =  [[NSString alloc] initWithData:decryptedPerseus encoding:NSUTF8StringEncoding];
                             SBLockScreenManager *lockScreenManager = [objc_getClass("SBLockScreenManager") sharedInstance];
-                            [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:NO completion:nil];
+                            
+                            if (!unlockedWithPerseus && pokeType > 0){
+                                pokeGizmo(pokeType);
+                            }
+                            
+                            [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:![[objc_getClass("SBLockScreenManager") sharedInstance] _shouldUnlockUIOnKeyDownEvent] completion:^{
+                                unlockedWithPerseus = YES;
+                            }];
+                            
+                            
                             lastOnWrist = onWrist;
                             lastSecurelyUnlocked = securelyUnlocked;
                         }
@@ -132,6 +150,18 @@ static NSString *harpe;
     return %orig;
 }
 %end
+
+%hook CSLockScreenPearlSettings
+-(CSLockScreenBiometricFailureSettings *)failureSettings{
+    CSLockScreenBiometricFailureSettings *settings = %orig;
+    if (enabled && deferBioFailureVibration && perseus){
+        settings.vibrate = NO;
+    }else{
+        settings.vibrate = YES;
+    }
+    return settings;
+}
+%end
 %end
 
 
@@ -142,6 +172,10 @@ static void reloadPrefs(){
     autoLockIPhone = autoLockIPhoneVal ? [autoLockIPhoneVal boolValue] : YES;
     id rssiThresholdVal = valueForKey(@"rssiThreshold");
     rssiThreshold = rssiThresholdVal ? [rssiThresholdVal longLongValue] : -60;
+    id deferBioFailureVibrationVal = valueForKey(@"enabled");
+    deferBioFailureVibration = deferBioFailureVibrationVal ? [deferBioFailureVibrationVal boolValue] : YES;
+    id pokeTypeVal = valueForKey(@"pokeType");
+    pokeType = pokeTypeVal ? [pokeTypeVal intValue] : PSPokeGizmoTypeOnce;
     if (!enabled){
         perseus = nil;
         harpe = nil;
@@ -178,6 +212,7 @@ static void screenDimmed(){
 static void screenUndimmed(){
     sendInvalidateRSSIPerseusQueryWithReply(NULL);
     screenOff = NO;
+    unlockedWithPerseus = NO;
 }
 
 %ctor{
@@ -206,6 +241,7 @@ static void screenUndimmed(){
                 if (isSharingd){
                     %init(Sharingd);
                     [PSGizmoStateObserver sharedInstance];
+                    
                 }
             }
             

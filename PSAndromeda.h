@@ -8,22 +8,6 @@
 #include <xpc/xpc.h>
 #import "PrivateHeaders.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void sendPerseusQueryWithReply(xpc_object_t message, xpc_handler_t handler);
-void sendGeneralPerseusQueryWithReply(xpc_handler_t handler);
-void sendInvalidateRSSIPerseusQueryWithReply(xpc_handler_t handler);
-void handlePerseusEvent(xpc_object_t event);
-id valueForKey(NSString *key);
-
-#ifdef __cplusplus
-}
-#endif
-
-extern int64_t currentRssi;
-
 typedef NS_ENUM(int64_t, PSQueryType) {
     //0 - Unexpected
     //1 - DetectDisabled
@@ -43,3 +27,19 @@ typedef NS_ENUM(int64_t, PSQueryType) {
     PSQueryTypeRSSI = 6
 
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void sendPerseusQueryWithReply(xpc_object_t message, xpc_handler_t handler);
+void sendGeneralPerseusQueryWithReply(xpc_handler_t handler);
+void sendInvalidateRSSIPerseusQueryWithReply(xpc_handler_t handler);
+void handlePerseusEvent(xpc_object_t event);
+id valueForKey(NSString *key);
+
+#ifdef __cplusplus
+}
+#endif
+
+extern int64_t currentRssi;
