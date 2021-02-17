@@ -5,11 +5,13 @@
 
 #import "PSShared.h"
 #import "PrivateHeaders.h"
+#include <objc/runtime.h>
 
 static NSXPCConnection* nacXPCConnection(){
     
     NSXPCConnection *nacConnection = [[NSXPCConnection alloc] initWithMachServiceName:@"com.apple.NanoAudioControl" options:NSXPCConnectionPrivileged];
     NSXPCInterface *interface = [NSXPCInterface interfaceWithProtocol:@protocol(NACXPCInterface)];
+    //[interface setClasses:[NSSet setWithObjects:[NSArray class], [objc_getClass("NACAudioRouteBuffer") class], nil] forSelector:@selector(audioRoutesForCategory:result:) argumentIndex:0 ofReply:YES];
     nacConnection.remoteObjectInterface = interface;
     
     nacConnection.interruptionHandler = ^{
@@ -28,6 +30,8 @@ static NSXPCConnection* nacXPCConnection(){
 
 void pokeGizmo(PSPokeGizmoType type){
     NSXPCConnection *nacConnection = nacXPCConnection();
+    [[nacConnection remoteObjectProxy] setHapticIntensity:1.0];
+
     switch (type) {
         case PSPokeGizmoTypeOnce:{
             //Dirty, but works

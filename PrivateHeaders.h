@@ -15,7 +15,13 @@
 -(void)_simulateLockButtonPress;
 @end
 
+@interface CSCoverSheetViewController : UIViewController
+-(BOOL)isMainPageVisible;
+-(BOOL)isShowingTodayView;
+@end
+
 @interface SBLockScreenManager : NSObject
+@property (nonatomic,readonly) CSCoverSheetViewController * coverSheetViewController;
 +(id)sharedInstance;
 -(BOOL)_attemptUnlockWithPasscode:(id)arg1 mesa:(BOOL)arg2 finishUIUnlock:(BOOL)arg3 completion:(/*^block*/id)arg4 ;
 -(BOOL)isUILocked;
@@ -113,6 +119,12 @@
 @end
 
 //NanoAudioControl
+@interface PBCodable : NSObject
+@end
+
+@interface NACAudioRouteBuffer : PBCodable
+@end
+
 @protocol NACXPCInterface <NSObject>
 @required
 -(void)setHapticIntensity:(float)arg1;

@@ -119,7 +119,9 @@ static NSString *harpe;
                                 pokeGizmo(pokeType);
                             }
                             
-                            [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:![[objc_getClass("SBLockScreenManager") sharedInstance] _shouldUnlockUIOnKeyDownEvent] completion:^{
+                            BOOL shouldFinishUIUnlock = ([lockScreenManager.coverSheetViewController isMainPageVisible] || [lockScreenManager.coverSheetViewController isShowingTodayView]) && ![[objc_getClass("SBLockScreenManager") sharedInstance] _shouldUnlockUIOnKeyDownEvent];
+                            
+                            [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:shouldFinishUIUnlock completion:^{
                                 unlockedWithPerseus = YES;
                             }];
                             

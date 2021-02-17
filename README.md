@@ -46,6 +46,10 @@ Support X series iPhone on iOS 13+. This package tested to be working on iPhone 
 ## Bonus
 Perseus is the one who beheaded Medusa in Greek mythology. Medusa is Apple's code name for Face ID.
 
+## Credits
+- Rob Napier - [RNCryptor](https://github.com/RNCryptor/RNCryptor-objc)
+- Denis Moskowitz - Perseus vector
+
 ## License
 All source code in this repository are licensed under GPLv3, unless stated otherwise.
 
