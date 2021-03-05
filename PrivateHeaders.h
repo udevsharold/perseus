@@ -38,6 +38,10 @@
 @property (assign,nonatomic) BOOL waitUntilButtonUp;
 @end
 
+@interface SBAssistantController : NSObject
++(BOOL)isVisible;
+@end
+
 //sharingd
 @interface IDSDevice : NSObject
 @property (nonatomic,readonly) NSArray * linkedUserURIs;
