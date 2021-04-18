@@ -181,7 +181,6 @@ void handlePerseusEvent(xpc_object_t event){
                         break;
                     }
                     case PSQueryTypeInvalidateRSSI:{
-                        cachedRssi = currentRssi;
                         currentRssi = 1;
                         break;
                     }

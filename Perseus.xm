@@ -52,7 +52,9 @@ static NSString *harpe;
 %hook SDNearbyAgent
 - (void)_deviceDiscoveryBLEDeviceFound:(SFBLEDevice *)bleDevice type:(long long)type{
     if ([[bleDevice valueForKey:@"_advertisementFields"][@"model"] hasPrefix:@"Watch"] && bleDevice.paired){
+        cachedRssi = bleDevice.rssi;
         currentRssi = bleDevice.rssi;
+        
     }
     %orig;
 }
