@@ -10,6 +10,7 @@
 #import "PrivateHeaders.h"
 
 static BOOL enabled;
+static BOOL banner;
 static BOOL lastOnWrist;
 static BOOL lastSecurelyUnlocked;
 static BOOL screenOff;
@@ -18,7 +19,9 @@ static BOOL autoLockIPhone;
 static BOOL deferBioFailureVibration;
 static int pokeType;
 static BOOL unlockedWithPerseus;
-int64_t currentRssi;
+static BOOL fastUnlock;
+int64_t currentRssi = 100;
+int64_t cachedRssi = 100;
 
 static NSData *perseus;
 static NSString *harpe;
@@ -48,11 +51,9 @@ static NSString *harpe;
 
 %hook SDNearbyAgent
 - (void)_deviceDiscoveryBLEDeviceFound:(SFBLEDevice *)bleDevice type:(long long)type{
-    
     if ([[bleDevice valueForKey:@"_advertisementFields"][@"model"] hasPrefix:@"Watch"] && bleDevice.paired){
         currentRssi = bleDevice.rssi;
     }
-    
     %orig;
 }
 
@@ -65,12 +66,16 @@ static NSString *harpe;
     BOOL success = %orig;
     
     if (enabled && success && !mesa && passcode && !perseus){
-        sendGeneralPerseusQueryWithReply(^(xpc_object_t reply){
+        sendGeneralPerseusQueryWithReply(fastUnlock, ^(xpc_object_t reply){
             BOOL onWrist = xpc_dictionary_get_int64(reply, "pairedWatchWristState") == 3;
             if (onWrist){
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+                    NSError *error = nil;
                     harpe = [[NSUUID UUID] UUIDString];
-                    perseus = [RNEncryptor encryptData:[passcode dataUsingEncoding:NSUTF8StringEncoding] withSettings:kRNCryptorAES256Settings password:harpe error:nil];
+                    perseus = [RNEncryptor encryptData:[passcode dataUsingEncoding:NSUTF8StringEncoding] withSettings:kRNCryptorAES256Settings password:harpe error:&error];
+                    if (banner && !error){
+                        sendVexillariusMesage(vexillariusMesage("Session Begins", "Perseus", "Perseus", 2.0));
+                    }
                 });
             }
         });
@@ -91,7 +96,7 @@ static NSString *harpe;
             BOOL isUILocked = [[objc_getClass("SBLockScreenManager") sharedInstance] isUILocked];
             
             if (isUILocked && !screenOff){
-                sendGeneralPerseusQueryWithReply(^(xpc_object_t reply){
+                sendGeneralPerseusQueryWithReply(fastUnlock, ^(xpc_object_t reply){
                     BOOL onWrist = xpc_dictionary_get_int64(reply, "pairedWatchWristState") == 3;
                     BOOL securelyUnlocked = xpc_dictionary_get_int64(reply, "pairedWatchLockState") == 0;
                     BOOL isNearby = xpc_dictionary_get_bool(reply, "nearby");
@@ -117,14 +122,27 @@ static NSString *harpe;
                             
                             if (!unlockedWithPerseus && pokeType > 0){
                                 pokeGizmo(pokeType);
+                                if (banner){
+                                sendVexillariusMesage(vexillariusMesage("Unlocked with Watch", "Perseus", "WatchSide", 2.0));
+                                }
                             }
                             
                             BOOL shouldFinishUIUnlock = ([lockScreenManager.coverSheetViewController isMainPageVisible] || [lockScreenManager.coverSheetViewController isShowingTodayView]) && ![[objc_getClass("SBLockScreenManager") sharedInstance] _shouldUnlockUIOnKeyDownEvent] && ![objc_getClass("SBAssistantController") isVisible];
                             
-                            [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:shouldFinishUIUnlock completion:^{
+                            BOOL successUnlock = [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:shouldFinishUIUnlock completion:^{
                                 unlockedWithPerseus = YES;
                             }];
                             
+                            //Reattempt unlock if failed
+                            if (!successUnlock){
+                                unlockedWithPerseus = NO;
+                                if (banner){
+                                sendVexillariusMesage(vexillariusMesage("Reattempt Unlock", "Perseus", "Perseus", 1.0));
+                                }
+                                [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:shouldFinishUIUnlock completion:^{
+                                    unlockedWithPerseus = YES;
+                                }];
+                            }
                             
                             lastOnWrist = onWrist;
                             lastSecurelyUnlocked = securelyUnlocked;
@@ -139,13 +157,23 @@ static NSString *harpe;
         if (@available(iOS 13.5, *)){
             if (eventType == BOTTOM_OF_FACE_OCCLUDED){
                 HBLogDebug(@"Wearing mask, a good boy!");
-                //Delay by few seconds to allow ble scanner do its job updating the rssi
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DELAY_ATTEMPT_TO_AUTH_WITH_AW * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), autoUnlock);
+                if (fastUnlock){
+                    //Utilize cache
+                    autoUnlock();
+                }else{
+                    //Delay by few seconds to allow ble scanner do its job updating the rssi
+                    HBLogDebug(@"DELAYED");
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DELAY_ATTEMPT_TO_AUTH_WITH_AW * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), autoUnlock);
+                }
             }
         }else{
             if (eventType == FACE_IN_VIEW){
                 HBLogDebug(@"A cute face, 10/10 would unlock!");
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DELAY_ATTEMPT_TO_AUTH_WITH_AW * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), autoUnlock);
+                if (fastUnlock){
+                    autoUnlock();
+                }else{
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DELAY_ATTEMPT_TO_AUTH_WITH_AW * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), autoUnlock);
+                }
             }
         }
     }
@@ -170,8 +198,12 @@ static NSString *harpe;
 static void reloadPrefs(){
     id enabledVal = valueForKey(@"enabled");
     enabled = enabledVal ? [enabledVal boolValue] : YES;
+    id bannerVal = valueForKey(@"enabledBanner");
+    banner = bannerVal ? [bannerVal boolValue] : YES;
     id autoLockIPhoneVal = valueForKey(@"autoLockIPhone");
     autoLockIPhone = autoLockIPhoneVal ? [autoLockIPhoneVal boolValue] : YES;
+    id fastUnlockVal = valueForKey(@"fastUnlock");
+    fastUnlock = fastUnlockVal ? [fastUnlockVal boolValue] : YES;
     id rssiThresholdVal = valueForKey(@"rssiThreshold");
     rssiThreshold = rssiThresholdVal ? [rssiThresholdVal longLongValue] : -60;
     id deferBioFailureVibrationVal = valueForKey(@"enabled");
@@ -184,15 +216,25 @@ static void reloadPrefs(){
     }
 }
 
+static void lockDevice(){
+    [((SpringBoard *)[%c(SpringBoard) sharedApplication]) _simulateLockButtonPress];
+}
+
+static void forceLockDeviceIfNecessary(){
+    if (unlockedWithPerseus && !screenOff){
+        lockDevice();
+    }
+}
+
 static void gizmoStateChanged(){
     if (enabled){
-        sendGeneralPerseusQueryWithReply(^(xpc_object_t reply){
+        sendGeneralPerseusQueryWithReply(fastUnlock, ^(xpc_object_t reply){
             BOOL onWrist = xpc_dictionary_get_int64(reply, "pairedWatchWristState") == 3;
             BOOL securelyUnlocked = xpc_dictionary_get_int64(reply, "pairedWatchLockState") == 0;
             
             //Auto lock iPhone if AW not on wrist or locked
             if (autoLockIPhone && perseus && harpe && (lastOnWrist && !onWrist) && (lastSecurelyUnlocked && !securelyUnlocked)){
-                [((SpringBoard *)[%c(SpringBoard) sharedApplication]) _simulateLockButtonPress];
+                lockDevice();
             }
             
             //Revoke token
@@ -238,6 +280,7 @@ static void screenUndimmed(){
                     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)reloadPrefs, (CFStringRef)PREFS_CHANGED_NN, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
                     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)screenDimmed, (CFStringRef)SCREEN_OFF_NN, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
                     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)screenUndimmed, (CFStringRef)SCREEN_ON_NN, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+                    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)forceLockDeviceIfNecessary, (CFStringRef)FORCE_LOCK_NN, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
                 }
                 
                 if (isSharingd){

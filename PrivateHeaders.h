@@ -42,6 +42,27 @@
 +(BOOL)isVisible;
 @end
 
+//Sharing
+@interface SFBLEDevice : NSObject
+@property (assign,nonatomic) BOOL paired;
+@property (assign,nonatomic) long long rssi;
+@property (assign,nonatomic) int rssiEstimate;
+@property (assign,nonatomic) BOOL insideBubble;
+@property (assign,nonatomic) BOOL insideSmallBubble;
+@property (assign,nonatomic) BOOL insideMediumBubble;
+@property (assign,nonatomic) long long distance;
+@property (assign,nonatomic) long long smoothedRSSI;
+@end
+
+@interface SFDevice : NSObject
+@property (nonatomic,copy) NSString * model;
+@property (nonatomic,copy) NSString * name;
+@property (nonatomic,retain) SFBLEDevice * bleDevice;
+@end
+
+@interface SFBLEScanner : NSObject
+@end
+
 //sharingd
 @interface IDSDevice : NSObject
 @property (nonatomic,readonly) NSArray * linkedUserURIs;
@@ -92,34 +113,27 @@
 @property(retain, nonatomic) NSObject<OS_dispatch_queue> *dispatchQueue;
 @end
 
-@interface SDPairedDeviceAgent : SDXPCDaemon
+@interface SDPairedDeviceAgent : SDXPCDaemon{
+    BOOL _infoRequestForced;
+}
 + (id)sharedAgent;
 - (void)_idsTriggerSync;
+- (void)_idsSendStateUpdate:(NSMutableDictionary *)msg;
+//iOS 14
+- (void)_idsSendStateUpdate:(NSMutableDictionary *)msg asWaking:(BOOL)wake;
 @end
 
+@interface SDNearbyAgent : NSObject{
+    SFBLEScanner *_bleNearbyInfoScanner;
+}
++ (id)sharedNearbyAgent;
+- (void)_bleNearbyInfoScannerEnsureStarted;
+@end
 
 @interface SDStatusMonitor : NSObject
 @property(readonly) int pairedWatchLockState;
 @property(readonly) long long pairedWatchWristState;
 + (id)sharedMonitor;
-@end
-
-//Sharing
-@interface SFBLEDevice : NSObject
-@property (assign,nonatomic) BOOL paired;
-@property (assign,nonatomic) long long rssi;
-@property (assign,nonatomic) int rssiEstimate;
-@property (assign,nonatomic) BOOL insideBubble;
-@property (assign,nonatomic) BOOL insideSmallBubble;
-@property (assign,nonatomic) BOOL insideMediumBubble;
-@property (assign,nonatomic) long long distance;
-@property (assign,nonatomic) long long smoothedRSSI; 
-@end
-
-@interface SFDevice : NSObject
-@property (nonatomic,copy) NSString * model;
-@property (nonatomic,copy) NSString * name;
-@property (nonatomic,retain) SFBLEDevice * bleDevice;
 @end
 
 //NanoAudioControl
@@ -168,4 +182,34 @@
 @property (copy) id invalidationHandler;
 @property (retain,readonly) id remoteObjectProxy;
 - (void)invalidate;
+@end
+
+
+//PlatterKit
+@interface PLPillContentItem : NSObject
+-(id)itemWithText:(id)arg1 ;
+-(id)initWithAccessoryView:(id)arg1 ;
+@end
+
+@interface PLPillView : UIView
+@property (nonatomic,readonly) UIView * leadingAccessoryView;
+@property (nonatomic,readonly) UIView * trailingAccessoryView;
+@property (nonatomic,copy) NSArray * centerContentItems;
+-(id)initWithLeadingAccessoryView:(id)arg1 ;
+-(id)initWithTrailingAccessoryView:(id)arg1 ;
+-(id)initWithLeadingAccessoryView:(id)arg1 trailingAccessoryView:(id)arg2 ;
+@end
+
+//BannerKit
+@interface BNBannerSourceLayoutDescription : NSObject
+@property (nonatomic,readonly) CGSize containerSize;
+@property (nonatomic,readonly) CGSize presentationSize;
+@property (nonatomic,readonly) double offsetFromPresentationEdge;
+@end
+
+
+@interface BNBannerSource : NSObject
++(id)bannerSourceForDestination:(long long)arg1 forRequesterIdentifier:(id)arg2 ;
+-(BNBannerSourceLayoutDescription *)layoutDescriptionWithError:(NSError **)arg1 ;
+-(BOOL)postPresentable:(id)arg1 options:(unsigned long long)arg2 userInfo:(id)arg3 error:(NSError **)arg4 ;
 @end

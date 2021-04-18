@@ -33,6 +33,19 @@
         [rootSpecifiers addObject:rssiThresholdSpec];
         
         
+        //Banner
+        PSSpecifier *enabledBannerGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
+        [enabledBannerGroupSpec setProperty:@"Display relevant banners when Perseus is effective." forKey:@"footerText"];
+        [rootSpecifiers addObject:enabledBannerGroupSpec];
+        
+        PSSpecifier *enabledBannerSpec = [PSSpecifier preferenceSpecifierNamed:@"Banner" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:nil cell:PSSwitchCell edit:nil];
+        [enabledBannerSpec setProperty:@"Banner" forKey:@"label"];
+        [enabledBannerSpec setProperty:@"enabledBanner" forKey:@"key"];
+        [enabledBannerSpec setProperty:@YES forKey:@"default"];
+        [enabledBannerSpec setProperty:PERSEUS_IDENTIFIER forKey:@"defaults"];
+        [enabledBannerSpec setProperty:PREFS_CHANGED_NN forKey:@"PostNotification"];
+        [rootSpecifiers addObject:enabledBannerSpec];
+        
         //Auto lock iPhone
         PSSpecifier *autoLockIPhoneGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
         [autoLockIPhoneGroupSpec setProperty:@"Lock iPhone in the event where Apple Watch is not longer authenticated." forKey:@"footerText"];
@@ -45,6 +58,19 @@
         [autoLockIphoneSpec setProperty:PERSEUS_IDENTIFIER forKey:@"defaults"];
         [autoLockIphoneSpec setProperty:PREFS_CHANGED_NN forKey:@"PostNotification"];
         [rootSpecifiers addObject:autoLockIphoneSpec];
+        
+        //Fast Unlock
+        PSSpecifier *fastUnlockGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
+        [fastUnlockGroupSpec setProperty:@"Increase unlock speed by utilizing cached RSSI. Disable this if 2-3 seconds delay is not an issue for you." forKey:@"footerText"];
+        [rootSpecifiers addObject:fastUnlockGroupSpec];
+        
+        PSSpecifier *fastUnlockSpec = [PSSpecifier preferenceSpecifierNamed:@"Fast Unlock" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:nil cell:PSSwitchCell edit:nil];
+        [fastUnlockSpec setProperty:@"Fast Unlock" forKey:@"label"];
+        [fastUnlockSpec setProperty:@"fastUnlock" forKey:@"key"];
+        [fastUnlockSpec setProperty:@YES forKey:@"default"];
+        [fastUnlockSpec setProperty:PERSEUS_IDENTIFIER forKey:@"defaults"];
+        [fastUnlockSpec setProperty:PREFS_CHANGED_NN forKey:@"PostNotification"];
+        [rootSpecifiers addObject:fastUnlockSpec];
         
         //Disable failure vibration
         PSSpecifier *bioFailureVibrationGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];

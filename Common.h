@@ -13,6 +13,7 @@
 #define PERSEUS_IDENTIFIER @"com.udevs.perseus"
 #define PREFS_CHANGED_NN @"com.udevs.perseus.prefschanged"
 #define GIZMO_STATE_CHANGED_NN @"com.udevs.perseus.gizmostatechanged"
+#define FORCE_LOCK_NN @"com.udevs.perseus.forcelock"
 
 #define SCREEN_ON_NN @"com.apple.springboardservices.eventobserver.internalSBSEventObserverEventUndimmed"
 #define SCREEN_OFF_NN @"com.apple.springboardservices.eventobserver.internalSBSEventObserverEventDimmed"

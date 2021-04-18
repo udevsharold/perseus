@@ -24,8 +24,9 @@ typedef NS_ENUM(int64_t, PSQueryType) {
     PSQueryTypeActive = 3,
     PSQueryTypeConnected = 4,
     PSQueryTypeInvalidateRSSI = 5,
-    PSQueryTypeRSSI = 6
-
+    PSQueryTypeRSSI = 6,
+    PSQueryTypeRSSICache = 7,
+    PSQueryTypeGizmoName = 8
 };
 
 #ifdef __cplusplus
@@ -33,7 +34,9 @@ extern "C" {
 #endif
 
 void sendPerseusQueryWithReply(xpc_object_t message, xpc_handler_t handler);
-void sendGeneralPerseusQueryWithReply(xpc_handler_t handler);
+void sendGeneralPerseusQueryWithReply(BOOL fastUnlock, xpc_handler_t handler);
+xpc_object_t vexillariusMesage(const char *title, const char *subTitle, const char *imageName, double timeout);
+void sendVexillariusMesage(xpc_object_t message);
 void sendInvalidateRSSIPerseusQueryWithReply(xpc_handler_t handler);
 void handlePerseusEvent(xpc_object_t event);
 id valueForKey(NSString *key);
@@ -43,3 +46,4 @@ id valueForKey(NSString *key);
 #endif
 
 extern int64_t currentRssi;
+extern int64_t cachedRssi;

@@ -4,9 +4,11 @@
 //  file 'LICENSE', which is part of this source code package.
 
 #import "PSAndromeda.h"
+#import "Vexillarius.h"
 #import "PrivateHeaders.h"
+#include <stdio.h>
 
-static xpc_object_t generalQueriesMessage(){
+static xpc_object_t generalQueriesMessage(BOOL fastUnlock){
     xpc_object_t message = xpc_dictionary_create(NULL, NULL, 0);
     
     xpc_dictionary_set_bool(message, kPerseusEvent, YES);
@@ -17,10 +19,35 @@ static xpc_object_t generalQueriesMessage(){
     xpc_array_set_int64(queries, ((size_t)(-1)), PSQueryTypeNearby);
     xpc_array_set_int64(queries, ((size_t)(-1)), PSQueryTypeActive);
     xpc_array_set_int64(queries, ((size_t)(-1)), PSQueryTypeConnected);
-    xpc_array_set_int64(queries, ((size_t)(-1)), PSQueryTypeRSSI);
-    
+    xpc_array_set_int64(queries, ((size_t)(-1)), (fastUnlock?PSQueryTypeRSSICache:PSQueryTypeRSSI));
+    xpc_array_set_int64(queries, ((size_t)(-1)), PSQueryTypeGizmoName);
+
     xpc_dictionary_set_value(message, kPerseusQuery, queries);
     
+    return message;
+}
+
+static const char* fullImagePathNamed(const char* name, const char* fileExt, int mode){
+    static char str[128];
+    snprintf(str, sizeof(str), "/Library/Application Support/Perseus.bundle/%s-%s.%s", name, (mode==0?"Light":"Dark"), fileExt);
+    return str;
+}
+
+xpc_object_t vexillariusMesage(const char *title, const char *subTitle, const char *imageName, double timeout){
+    xpc_object_t message = xpc_dictionary_create(NULL, NULL, 0);
+    xpc_dictionary_set_double(message, VXKey.timeout, timeout?:2.0);
+    xpc_dictionary_set_string(message, VXKey.title, title);
+    xpc_dictionary_set_string(message, VXKey.subtitle, subTitle);
+    
+    if (@available(iOS 13.0, *)){
+        if ([UITraitCollection currentTraitCollection].userInterfaceStyle == UIUserInterfaceStyleLight){
+            const char *imgPath = fullImagePathNamed(imageName, "png", 1);
+            xpc_dictionary_set_string(message, VXKey.leadingImagePath, imgPath);
+        }else{
+            const char *imgPath = fullImagePathNamed(imageName, "png", 0);
+            xpc_dictionary_set_string(message, VXKey.leadingImagePath, imgPath);
+        }
+    }
     return message;
 }
 
@@ -63,12 +90,28 @@ void sendPerseusQueryWithReply(xpc_object_t message, xpc_handler_t handler){
     }
 }
 
-void sendGeneralPerseusQueryWithReply(xpc_handler_t handler){
-    sendPerseusQueryWithReply(generalQueriesMessage(), handler);
+void sendGeneralPerseusQueryWithReply(BOOL fastUnlock, xpc_handler_t handler){
+    sendPerseusQueryWithReply(generalQueriesMessage(fastUnlock), handler);
 }
 
 void sendInvalidateRSSIPerseusQueryWithReply(xpc_handler_t handler){
     sendPerseusQueryWithReply(invalidateRSSIMessage(), handler);
+}
+
+static xpc_connection_t cslXPCConnection(){
+    xpc_connection_t connection =
+    xpc_connection_create_mach_service("com.udevs.vexillarius", NULL, 0);
+    xpc_connection_set_event_handler(connection, ^(xpc_object_t event) {
+    });
+    xpc_connection_resume(connection);
+    return connection;
+}
+
+void sendVexillariusMesage(xpc_object_t message){
+    xpc_connection_t cslConnection = cslXPCConnection();
+    if (cslConnection){
+        xpc_connection_send_message(cslConnection, message);
+    }
 }
 
 static void replyWithObject(xpc_object_t replyObject, xpc_object_t event){
@@ -80,6 +123,7 @@ static void replyWithObject(xpc_object_t replyObject, xpc_object_t event){
 
 void handlePerseusEvent(xpc_object_t event){
     
+    
     xpc_object_t queries = xpc_dictionary_get_value(event, kPerseusQuery);
     xpc_object_t xpcReplyObject = xpc_dictionary_create(NULL, NULL, 0);
     
@@ -87,7 +131,17 @@ void handlePerseusEvent(xpc_object_t event){
         
         //Ensure latest connection state
         SDPairedDeviceAgent *pairedDeviceAgent = [objc_getClass("SDPairedDeviceAgent") sharedAgent];
-        [pairedDeviceAgent _idsTriggerSync];
+        dispatch_sync(pairedDeviceAgent.dispatchQueue, ^{
+            NSMutableDictionary *msg = [@{
+                @"met":@1,
+                @"rin":@1
+            } mutableCopy];
+            if (@available(iOS 14.0, *)){
+                [pairedDeviceAgent _idsSendStateUpdate:msg asWaking:YES];
+            }else{
+                [pairedDeviceAgent _idsSendStateUpdate:msg];
+            }
+        });
         
         SDStatusMonitor *statusMonitor = [objc_getClass("SDStatusMonitor") sharedMonitor];
         IDSService *service = [pairedDeviceAgent valueForKey:@"_idsService"];
@@ -127,6 +181,7 @@ void handlePerseusEvent(xpc_object_t event){
                         break;
                     }
                     case PSQueryTypeInvalidateRSSI:{
+                        cachedRssi = currentRssi;
                         currentRssi = 1;
                         break;
                     }
@@ -134,8 +189,26 @@ void handlePerseusEvent(xpc_object_t event){
                         xpc_dictionary_set_int64(xpcReplyObject, "rssi", currentRssi);
                         break;
                     }
+                    case PSQueryTypeGizmoName:{
+                        if (defaultPairedDevice){
+                            xpc_dictionary_set_string(xpcReplyObject, "name", [defaultPairedDevice.name UTF8String]);
+                        }
+                        break;
+                    }
+                    case PSQueryTypeRSSICache:{
+                        if (cachedRssi < 0 && currentRssi > 0){
+                            xpc_dictionary_set_int64(xpcReplyObject, "rssi", cachedRssi);
+                            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                                if (currentRssi > 0){
+                                    CFNotificationCenterPostNotificationWithOptions(CFNotificationCenterGetDarwinNotifyCenter(), (CFStringRef)FORCE_LOCK_NN,  NULL, NULL, kCFNotificationDeliverImmediately);
+                                }
+                            });
+                        }else{
+                            xpc_dictionary_set_int64(xpcReplyObject, "rssi", currentRssi);
+                        }
+                        break;
+                    }
                     default:
-                        
                         break;
                 }
             }
