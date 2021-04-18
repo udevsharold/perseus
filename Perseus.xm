@@ -131,20 +131,9 @@ static NSString *harpe;
                             
                             BOOL shouldFinishUIUnlock = ([lockScreenManager.coverSheetViewController isMainPageVisible] || [lockScreenManager.coverSheetViewController isShowingTodayView]) && ![[objc_getClass("SBLockScreenManager") sharedInstance] _shouldUnlockUIOnKeyDownEvent] && ![objc_getClass("SBAssistantController") isVisible];
                             
-                            BOOL successUnlock = [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:shouldFinishUIUnlock completion:^{
+                            [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:shouldFinishUIUnlock completion:^{
                                 unlockedWithPerseus = YES;
                             }];
-                            
-                            //Reattempt unlock if failed
-                            if (!successUnlock){
-                                unlockedWithPerseus = NO;
-                                if (banner){
-                                sendVexillariusMesage(vexillariusMesage("Reattempt Unlock", "Perseus", "Perseus", 1.0));
-                                }
-                                [lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:shouldFinishUIUnlock completion:^{
-                                    unlockedWithPerseus = YES;
-                                }];
-                            }
                             
                             lastOnWrist = onWrist;
                             lastSecurelyUnlocked = securelyUnlocked;

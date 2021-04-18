@@ -38,7 +38,7 @@ xpc_object_t vexillariusMesage(const char *title, const char *subTitle, const ch
     xpc_dictionary_set_double(message, VXKey.timeout, timeout?:2.0);
     xpc_dictionary_set_string(message, VXKey.title, title);
     xpc_dictionary_set_string(message, VXKey.subtitle, subTitle);
-    
+
     if (@available(iOS 13.0, *)){
         if ([UITraitCollection currentTraitCollection].userInterfaceStyle == UIUserInterfaceStyleLight){
             const char *imgPath = fullImagePathNamed(imageName, "png", 1);
