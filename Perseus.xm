@@ -124,9 +124,9 @@ static NSString *harpe;
                             
                             if (!unlockedWithPerseus && pokeType > 0){
                                 pokeGizmo(pokeType);
-                                if (banner){
+                            }
+                            if (!unlockedWithPerseus && banner){
                                 sendVexillariusMesage(vexillariusMesage("Unlocked with Watch", "Perseus", "WatchSide", 2.0));
-                                }
                             }
                             
                             BOOL shouldFinishUIUnlock = ([lockScreenManager.coverSheetViewController isMainPageVisible] || [lockScreenManager.coverSheetViewController isShowingTodayView]) && ![[objc_getClass("SBLockScreenManager") sharedInstance] _shouldUnlockUIOnKeyDownEvent] && ![objc_getClass("SBAssistantController") isVisible];
