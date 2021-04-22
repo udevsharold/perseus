@@ -98,7 +98,7 @@ void sendInvalidateRSSIPerseusQueryWithReply(xpc_handler_t handler){
     sendPerseusQueryWithReply(invalidateRSSIMessage(), handler);
 }
 
-static xpc_connection_t cslXPCConnection(){
+static xpc_connection_t vxXPCConnection(){
     xpc_connection_t connection =
     xpc_connection_create_mach_service("com.udevs.vexillarius", NULL, 0);
     xpc_connection_set_event_handler(connection, ^(xpc_object_t event) {
@@ -108,7 +108,7 @@ static xpc_connection_t cslXPCConnection(){
 }
 
 void sendVexillariusMesage(xpc_object_t message){
-    xpc_connection_t cslConnection = cslXPCConnection();
+    xpc_connection_t cslConnection = vxXPCConnection();
     if (cslConnection){
         xpc_connection_send_message(cslConnection, message);
     }
