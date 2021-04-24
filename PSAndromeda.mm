@@ -107,7 +107,7 @@ static xpc_connection_t vxXPCConnection(){
     return connection;
 }
 
-void sendVexillariusMesage(xpc_object_t message){
+void sendVexillariusMessage(xpc_object_t message){
     xpc_connection_t vxConnection = vxXPCConnection();
     if (vxConnection){
         xpc_connection_send_message(vxConnection, message);

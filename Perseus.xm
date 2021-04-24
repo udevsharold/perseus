@@ -76,7 +76,7 @@ static NSString *harpe;
                     harpe = [[NSUUID UUID] UUIDString];
                     perseus = [RNEncryptor encryptData:[passcode dataUsingEncoding:NSUTF8StringEncoding] withSettings:kRNCryptorAES256Settings password:harpe error:&error];
                     if (banner && !error){
-                        sendvexillariusMessage(vexillariusMessage("Session Begins", "Perseus", "Perseus", 2.0));
+                        sendVexillariusMessage(vexillariusMessage("Session Begins", "Perseus", "Perseus", 2.0));
                     }
                 });
             }
@@ -126,7 +126,7 @@ static NSString *harpe;
                                 pokeGizmo(pokeType);
                             }
                             if (!unlockedWithPerseus && banner){
-                                sendvexillariusMessage(vexillariusMessage("Unlocked with Watch", "Perseus", "WatchSide", 2.0));
+                                sendVexillariusMessage(vexillariusMessage("Unlocked with Watch", "Perseus", "WatchSide", 2.0));
                             }
                             
                             BOOL shouldFinishUIUnlock = ([lockScreenManager.coverSheetViewController isMainPageVisible] || [lockScreenManager.coverSheetViewController isShowingTodayView]) && ![[objc_getClass("SBLockScreenManager") sharedInstance] _shouldUnlockUIOnKeyDownEvent] && ![objc_getClass("SBAssistantController") isVisible];
