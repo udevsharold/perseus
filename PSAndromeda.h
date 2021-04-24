@@ -35,7 +35,7 @@ extern "C" {
 
 void sendPerseusQueryWithReply(xpc_object_t message, xpc_handler_t handler);
 void sendGeneralPerseusQueryWithReply(BOOL fastUnlock, xpc_handler_t handler);
-xpc_object_t vexillariusMesage(const char *title, const char *subTitle, const char *imageName, double timeout);
+xpc_object_t vexillariusMessage(const char *title, const char *subTitle, const char *imageName, double timeout);
 void sendVexillariusMesage(xpc_object_t message);
 void sendInvalidateRSSIPerseusQueryWithReply(xpc_handler_t handler);
 void handlePerseusEvent(xpc_object_t event);

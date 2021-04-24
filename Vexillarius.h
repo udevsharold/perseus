@@ -21,7 +21,7 @@ extern const struct VXXPCKey
     const char *leadingImagePath;
     const char *trailingImageName;
     const char *trailingImagePath;
-    const char *trailingtText;
+    const char *trailingText;
     const char *backgroundColor;
 } VXKey;
 

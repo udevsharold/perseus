@@ -33,7 +33,7 @@ static const char* fullImagePathNamed(const char* name, const char* fileExt, int
     return str;
 }
 
-xpc_object_t vexillariusMesage(const char *title, const char *subTitle, const char *imageName, double timeout){
+xpc_object_t vexillariusMessage(const char *title, const char *subTitle, const char *imageName, double timeout){
     xpc_object_t message = xpc_dictionary_create(NULL, NULL, 0);
     xpc_dictionary_set_double(message, VXKey.timeout, timeout?:2.0);
     xpc_dictionary_set_string(message, VXKey.title, title);

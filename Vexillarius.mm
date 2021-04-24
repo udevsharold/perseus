@@ -17,6 +17,6 @@ const struct VXXPCKey VXKey =
     .leadingImagePath = "leadingImagePath",
     .trailingImageName = "trailingImageName",
     .trailingImagePath = "trailingImagePath",
-    .trailingtText = "trailingtText",
+    .trailingText = "trailingText",
     .backgroundColor = "backgroundColor"
 };
