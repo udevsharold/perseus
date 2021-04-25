@@ -42,6 +42,13 @@
 +(BOOL)isVisible;
 @end
 
+
+@interface SBLockStateAggregator : NSObject 
++(id)sharedInstance;
+-(int)lockState;
+@end
+
+
 //Sharing
 @interface SFBLEDevice : NSObject
 @property (assign,nonatomic) BOOL paired;

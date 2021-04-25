@@ -66,8 +66,9 @@ static NSString *harpe;
 %hook SBLockScreenManager
 -(BOOL)_attemptUnlockWithPasscode:(NSString *)passcode mesa:(BOOL)mesa finishUIUnlock:(BOOL)unlockUI completion:(/*^block*/id)completionHandler{
     BOOL success = %orig;
+    int lockState = [[%c(SBLockStateAggregator) sharedInstance] lockState];
     
-    if (enabled && success && !mesa && passcode && !perseus){
+    if (enabled && success && !mesa && passcode && !perseus && lockState == 0){
         sendGeneralPerseusQueryWithReply(fastUnlock, ^(xpc_object_t reply){
             BOOL onWrist = xpc_dictionary_get_int64(reply, "pairedWatchWristState") == 3;
             if (onWrist){
