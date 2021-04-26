@@ -22,6 +22,7 @@
 
 @interface SBLockScreenManager : NSObject
 @property (nonatomic,readonly) CSCoverSheetViewController * coverSheetViewController;
+@property (readonly) BOOL isUILocked;
 +(id)sharedInstance;
 -(BOOL)_attemptUnlockWithPasscode:(id)arg1 mesa:(BOOL)arg2 finishUIUnlock:(BOOL)arg3 completion:(/*^block*/id)arg4 ;
 -(BOOL)isUILocked;

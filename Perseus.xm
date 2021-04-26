@@ -67,7 +67,7 @@ static NSString *harpe;
 -(BOOL)_attemptUnlockWithPasscode:(NSString *)passcode mesa:(BOOL)mesa finishUIUnlock:(BOOL)unlockUI completion:(/*^block*/id)completionHandler{
     BOOL success = %orig;
     
-    if (enabled && success && !mesa && passcode && !perseus){
+    if (enabled && success && !mesa && passcode && !perseus && !self.isUILocked){
         sendGeneralPerseusQueryWithReply(fastUnlock, ^(xpc_object_t reply){
             BOOL onWrist = xpc_dictionary_get_int64(reply, "pairedWatchWristState") == 3;
             if (onWrist){
