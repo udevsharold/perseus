@@ -14,6 +14,7 @@ TWEAK_NAME = Perseus
 
 Perseus_FILES = $(wildcard *.xm) $(wildcard *.mm) $(wildcard RNCryptor/*.m)
 Perseus_CFLAGS = -fobjc-arc
+Perseus_FRAMEWORKS = UIKit Security
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 SUBPROJECTS += perseusprefs

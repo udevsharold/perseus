@@ -5,7 +5,6 @@
 
 #import "Common.h"
 #import <Foundation/NSXPCConnection.h>
-#import <Foundation/NSXPCInterface.h>
 
 //SpringBoard
 @interface UISystemShellApplication : UIApplication
