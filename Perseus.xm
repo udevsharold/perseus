@@ -19,6 +19,7 @@
 #import "PSNymph.h"
 #import "PSSeeker.h"
 #import "PrivateHeaders.h"
+#import <notify.h>
 
 long long rssiThreshold;
 BOOL fastUnlock;
@@ -27,7 +28,9 @@ int pokeType;
 BOOL enabled;
 BOOL banner;
 BOOL unlockApps;
-BOOL sessionFirstInitialized;
+BOOL inSession;
+
+static int lockStateNotifyToken;
 
 static BOOL lastOnWrist;
 static BOOL lastSecurelyUnlocked;
@@ -55,6 +58,7 @@ __strong NSString **harpePtr = &harpe;
 		[self _performOnMainQueueWhenAppeared:^{
 			
 			//2 = device passcode authentication
+			HBLogDebug(@"internalInfo %@", self.internalInfo);
 			if ([self.internalInfo[@"Policy"] intValue] >= 2){
 				
 				PSSeeker *seeker = [PSSeeker new];
@@ -71,9 +75,21 @@ __strong NSString **harpePtr = &harpe;
 					BOOL advertisedEnabled = [wisdom[@"enabled"] boolValue];
 					BOOL advertisedBanner = [wisdom[@"banner"] boolValue];
 					BOOL advertisedUnlockApps = [wisdom[@"unlockApps"] boolValue];
-					BOOL advertisedSessionFirstInitialized = [wisdom[@"sessionFirstInitialized"] boolValue];
+					BOOL advertisedinSession = [wisdom[@"inSession"] boolValue];
 					
-					if (advertisedEnabled && advertisedUnlockApps && (advertisedUnlockedWithPerseus || advertisedSessionFirstInitialized) && advertisedPerseus.length > 0 && advertisedHarpe.length > 0){
+					HBLogDebug(@"advertisedPerseus: %@", advertisedPerseus);
+					HBLogDebug(@"advertisedHarpe: %@", advertisedPerseus);
+					HBLogDebug(@"advertisedRssiThreshold: %lld", advertisedRssiThreshold);
+					HBLogDebug(@"advertisedFastUnlock: %d", advertisedFastUnlock ? 1 : 0);
+					HBLogDebug(@"advertisedUnlockedWithPerseus: %d", advertisedUnlockedWithPerseus ? 1 : 0);
+					HBLogDebug(@"advertisedPokeType: %ld", advertisedPokeType);
+					HBLogDebug(@"advertisedEnabled: %d", advertisedEnabled ? 1 : 0);
+					HBLogDebug(@"advertisedBanner: %d", advertisedBanner ? 1 : 0);
+					HBLogDebug(@"advertisedUnlockApps: %d", advertisedUnlockApps ? 1 : 0);
+					HBLogDebug(@"advertisedinSession: %d", advertisedinSession ? 1 : 0);
+
+					
+					if (advertisedEnabled && advertisedUnlockApps && (advertisedUnlockedWithPerseus || advertisedinSession) && advertisedPerseus.length > 0 && advertisedHarpe.length > 0){
 						
 						sendGeneralPerseusQueryWithReply(advertisedFastUnlock, ^(xpc_object_t reply){
 							BOOL onWrist = xpc_dictionary_get_int64(reply, "pairedWatchWristState") == 3;
@@ -82,6 +98,13 @@ __strong NSString **harpePtr = &harpe;
 							BOOL isActive = xpc_dictionary_get_bool(reply, "active");
 							BOOL isConnected = xpc_dictionary_get_bool(reply, "connected");
 							int64_t rssi = xpc_dictionary_get_int64(reply, "rssi");
+							
+							HBLogDebug(@"pairedWatchWristState: %lld", xpc_dictionary_get_int64(reply, "pairedWatchWristState"));
+							HBLogDebug(@"pairedWatchLockState: %lld", xpc_dictionary_get_int64(reply, "pairedWatchLockState"));
+							HBLogDebug(@"nearby: %d", isNearby?1:0);
+							HBLogDebug(@"active: %d", isActive?1:0);
+							HBLogDebug(@"connected: %d", isConnected?1:0);
+							HBLogDebug(@"rssi: %lld", rssi);
 							
 							if (onWrist && securelyUnlocked && (rssi >= advertisedRssiThreshold && rssi < 0) && isNearby && isActive && isConnected){
 								NSError *error = nil;
@@ -171,7 +194,7 @@ __strong NSString **harpePtr = &harpe;
 					NSError *error = nil;
 					harpe = [[NSUUID UUID] UUIDString];
 					perseus = [RNEncryptor encryptData:[passcode dataUsingEncoding:NSUTF8StringEncoding] withSettings:kRNCryptorAES256Settings password:harpe error:&error];
-					sessionFirstInitialized = YES;
+					inSession = YES;
 					if (banner && !error){
 						sendVexillariusMessage(vexillariusMessage("Session Begins", "Perseus", "Perseus", 2.0));
 					}
@@ -230,6 +253,7 @@ __strong NSString **harpePtr = &harpe;
 							
 							[lockScreenManager _attemptUnlockWithPasscode:passcode mesa:NO finishUIUnlock:shouldFinishUIUnlock completion:^{
 								unlockedWithPerseus = YES;
+								inSession = YES;
 							}];
 							
 							lastOnWrist = onWrist;
@@ -334,14 +358,12 @@ static void gizmoStateChanged(){
 
 static void screenDimmed(){
 	screenOff = YES;
-	sessionFirstInitialized = NO;
 }
 
 static void screenUndimmed(){
 	sendInvalidateRSSIPerseusQueryWithReply(NULL);
 	screenOff = NO;
 	unlockedWithPerseus = NO;
-	sessionFirstInitialized = NO;
 }
 
 %ctor{
@@ -368,6 +390,16 @@ static void screenUndimmed(){
 					CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)screenDimmed, (CFStringRef)SCREEN_OFF_NN, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 					CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)screenUndimmed, (CFStringRef)SCREEN_ON_NN, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 					CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)forceLockDeviceIfNecessary, (CFStringRef)FORCE_LOCK_NN, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+					
+					notify_register_dispatch("com.apple.springboard.lockstate", &lockStateNotifyToken, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^(int token){
+						uint64_t state = UINT64_MAX;
+						notify_get_state(token, &state);
+						if (state == 0){
+							HBLogDebug(@"Device unlocked");
+						}else{
+							inSession = NO;
+						}
+					});
 				}
 				
 				if (isSharingd){

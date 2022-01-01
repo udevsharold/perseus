@@ -59,7 +59,7 @@ extern __strong NSString **harpePtr;
 		@"enabled" : @(enabled),
 		@"banner" : @(banner),
 		@"unlockApps" : @(unlockApps),
-		@"sessionFirstInitialized" : @(sessionFirstInitialized)
+		@"inSession" : @(inSession)
 	};
 }
 

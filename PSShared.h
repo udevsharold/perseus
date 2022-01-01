@@ -23,7 +23,7 @@ extern int pokeType;
 extern BOOL enabled;
 extern BOOL banner;
 extern BOOL unlockApps;
-extern BOOL sessionFirstInitialized;
+extern BOOL inSession;
 #endif //PERSEUSPREFS
 
 typedef NS_ENUM(NSInteger, PSPokeGizmoType) {

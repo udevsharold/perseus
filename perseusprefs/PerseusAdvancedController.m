@@ -44,7 +44,7 @@
         
 		//unlock apps
 		PSSpecifier *unlockAppsGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
-		[unlockAppsGroupSpec setProperty:@"Authenticate apps using Apple Watch. iPhone must be unlocked via Perseus and the app shall accepts authentication using device passcode." forKey:@"footerText"];
+		[unlockAppsGroupSpec setProperty:@"Authenticate apps using Apple Watch. iPhone must be unlocked via Perseus and the app required to accepts authentication using device passcode." forKey:@"footerText"];
 		[rootSpecifiers addObject:unlockAppsGroupSpec];
 		
 		PSSpecifier *unlockAppsSpec = [PSSpecifier preferenceSpecifierNamed:@"Unlock Apps" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:nil cell:PSSwitchCell edit:nil];
