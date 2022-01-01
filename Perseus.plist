@@ -3,6 +3,7 @@
 		Executables = (
 			SpringBoard,
 			sharingd,
+			CoreAuthUI,
 		);
 	};
 }

@@ -12,20 +12,16 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-#import "Vexillarius.h"
+#import "Common.h"
+#import <RocketBootstrap/rocketbootstrap.h>
+#import <AppSupport/CPDistributedMessagingCenter.h>
+#import "PSNymph.h"
+#import "PSShared.h"
 
-const struct VXXPCKey VXKey =
-{
-    .timeout = "timeout",
-    .identifier = "identifier",
-    .type = "type",
-    .icon = "icon",
-    .title = "title",
-    .subtitle = "subtitle",
-    .leadingImageName = "leadingImageName",
-    .leadingImagePath = "leadingImagePath",
-    .trailingImageName = "trailingImageName",
-    .trailingImagePath = "trailingImagePath",
-    .trailingText = "trailingText",
-    .backgroundColor = "backgroundColor"
-};
+@interface PSSeeker : NSObject{
+	CPDistributedMessagingCenter * _messagingCenter;
+}
+-(NSDictionary *)getWisdom;
+-(BOOL)sendVexillariusMessage:(NSString *)bundleIdentifier title:(NSString *)title subtitle:(NSString *)subtitle imageName:(NSString *)imageName timeout:(double)timeout option:(PSNymphBannerOption)option;
+-(BOOL)pokeGizmo:(PSPokeGizmoType)pokeType;
+@end

@@ -15,6 +15,9 @@ TWEAK_NAME = Perseus
 Perseus_FILES = $(wildcard *.xm) $(wildcard *.mm) $(wildcard RNCryptor/*.m)
 Perseus_CFLAGS = -fobjc-arc
 Perseus_FRAMEWORKS = UIKit Security
+Perseus_PRIVATE_FRAMEWORKS = AppSupport
+Perseus_LIBRARIES = rocketbootstrap
+Perseus_LDFLAGS += $(THEOS)/sdks/iPhoneOS14.4.sdk/System/Library/Frameworks/LocalAuthentication.framework/Support/SharedUtils.framework/SharedUtils.tbd
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 SUBPROJECTS += perseusprefs

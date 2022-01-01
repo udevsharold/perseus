@@ -1,11 +1,20 @@
-//  Copyright (c) 2021 udevs
+//    Copyright (c) 2021 udevs
 //
-//  This file is subject to the terms and conditions defined in
-//  file 'LICENSE', which is part of this source code package.
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, version 3.
+//
+//    This program is distributed in the hope that it will be useful, but
+//    WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+//    General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #import "../Common.h"
 #import "../PSShared.h"
-#include "PerseusAdvancedController.h"
+#import "PerseusAdvancedController.h"
 
 @implementation PerseusAdvancedController
 
@@ -33,6 +42,19 @@
         [rootSpecifiers addObject:rssiThresholdSpec];
         
         
+		//unlock apps
+		PSSpecifier *unlockAppsGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
+		[unlockAppsGroupSpec setProperty:@"Authenticate apps using Apple Watch. iPhone must be unlocked via Perseus and the app shall accepts authentication using device passcode." forKey:@"footerText"];
+		[rootSpecifiers addObject:unlockAppsGroupSpec];
+		
+		PSSpecifier *unlockAppsSpec = [PSSpecifier preferenceSpecifierNamed:@"Unlock Apps" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:nil cell:PSSwitchCell edit:nil];
+		[unlockAppsSpec setProperty:@"Unlock Apps" forKey:@"label"];
+		[unlockAppsSpec setProperty:@"unlockApps" forKey:@"key"];
+		[unlockAppsSpec setProperty:@YES forKey:@"default"];
+		[unlockAppsSpec setProperty:PERSEUS_IDENTIFIER forKey:@"defaults"];
+		[unlockAppsSpec setProperty:PREFS_CHANGED_NN forKey:@"PostNotification"];
+		[rootSpecifiers addObject:unlockAppsSpec];
+		
         //Banner
         PSSpecifier *enabledBannerGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
         [enabledBannerGroupSpec setProperty:@"Display relevant banners when Perseus is effective." forKey:@"footerText"];

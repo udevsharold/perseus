@@ -1,14 +1,23 @@
-//  Copyright (c) 2021 udevs
+//    Copyright (c) 2021 udevs
 //
-//  This file is subject to the terms and conditions defined in
-//  file 'LICENSE', which is part of this source code package.
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, version 3.
+//
+//    This program is distributed in the hope that it will be useful, but
+//    WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+//    General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #import "Common.h"
 #import "RNCryptor/RNCryptor.h"
 #import "RNCryptor/RNDecryptor.h"
 #import "RNCryptor/RNEncryptor.h"
-#include <objc/runtime.h>
-#include <xpc/xpc.h>
+#import <objc/runtime.h>
+#import <xpc/xpc.h>
 
 #define DELAY_ATTEMPT_TO_AUTH_WITH_AW 2.0
 

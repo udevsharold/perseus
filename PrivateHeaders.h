@@ -1,7 +1,16 @@
-//  Copyright (c) 2021 udevs
+//    Copyright (c) 2021 udevs
 //
-//  This file is subject to the terms and conditions defined in
-//  file 'LICENSE', which is part of this source code package.
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, version 3.
+//
+//    This program is distributed in the hope that it will be useful, but
+//    WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+//    General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #import "Common.h"
 #import <Foundation/NSXPCConnection.h>
@@ -114,7 +123,7 @@
 @end
 
 @interface SDPairedDeviceAgent : SDXPCDaemon{
-    BOOL _infoRequestForced;
+	BOOL _infoRequestForced;
 }
 + (id)sharedAgent;
 - (void)_idsTriggerSync;
@@ -124,7 +133,7 @@
 @end
 
 @interface SDNearbyAgent : NSObject{
-    SFBLEScanner *_bleNearbyInfoScanner;
+	SFBLEScanner *_bleNearbyInfoScanner;
 }
 + (id)sharedNearbyAgent;
 - (void)_bleNearbyInfoScannerEnsureStarted;
@@ -212,4 +221,43 @@
 +(id)bannerSourceForDestination:(long long)arg1 forRequesterIdentifier:(id)arg2 ;
 -(BNBannerSourceLayoutDescription *)layoutDescriptionWithError:(NSError **)arg1 ;
 -(BOOL)postPresentable:(id)arg1 options:(unsigned long long)arg2 userInfo:(id)arg3 error:(NSError **)arg4 ;
+@end
+
+
+//CoreAuthUI
+@interface SBUIRemoteAlertServiceViewController : UIViewController
+@end
+
+@interface LACachedExternalizedContext : NSObject
+@property (nonatomic,retain) NSData * cachedExternalizedContext;
+@property (nonatomic,readonly) NSData * externalizedContext;
+@end
+
+@interface TransitionViewController : SBUIRemoteAlertServiceViewController
+@property(readonly, nonatomic) LACachedExternalizedContext *cachedExternalizedContext;
+@property(readonly, nonatomic) NSDictionary *options;
+@property(readonly, nonatomic) NSDictionary *internalInfo;
+@property(readonly, nonatomic) long long policy;
+- (void)uiSuccessWithResult:(NSDictionary *)arg1;
+- (void)uiFailureWithError:(id)arg1;
+- (void)_performOnMainQueueWhenAppeared:(id /*block*/)arg1;
+@end
+
+@interface FaceIdViewController : TransitionViewController
+- (void)_showFailAlert;
+@end
+
+
+@interface LASecureData : NSObject
++(id)secureDataWithString:(id)arg1 ;
+@end
+
+@interface LAPasscodeHelper : NSObject
++(id)sharedInstance;
+-(long long)verifyPasswordUsingPAM:(id)arg1 userID:(id)arg2 pamService:(id)arg3 pamUser:(id)arg4 pamToken:(id)arg5 ;
+-(long long)verifyPasswordUsingAKS:(id)arg1 acmContext:(id)arg2 userId:(id)arg3 policy:(long long)arg4 options:(id)arg5 ;
+@end
+
+@interface LAErrorHelper : NSObject
++(id)internalErrorWithMessage:(id)arg1 ;
 @end

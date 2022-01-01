@@ -12,20 +12,22 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-#import "Vexillarius.h"
+#import "Common.h"
+#import <RocketBootstrap/rocketbootstrap.h>
+#import <AppSupport/CPDistributedMessagingCenter.h>
 
-const struct VXXPCKey VXKey =
-{
-    .timeout = "timeout",
-    .identifier = "identifier",
-    .type = "type",
-    .icon = "icon",
-    .title = "title",
-    .subtitle = "subtitle",
-    .leadingImageName = "leadingImageName",
-    .leadingImagePath = "leadingImagePath",
-    .trailingImageName = "trailingImageName",
-    .trailingImagePath = "trailingImagePath",
-    .trailingText = "trailingText",
-    .backgroundColor = "backgroundColor"
+@interface CPDistributedMessagingCenter ()
+- (void)runServerOnCurrentThreadProtectedByEntitlement:(NSString *)entitlement;
+@end
+
+typedef NS_ENUM(NSInteger, PSNymphBannerOption){
+	PSNymphBannerOptionNone,
+	PSNymphBannerOptionTitleAsAppName,
+	PSNymphBannerOptionSubtitleAsAppName
 };
+
+@interface PSNymph : NSObject{
+	CPDistributedMessagingCenter * _messagingCenter;
+}
++(instancetype)sharedInstance;
+@end
