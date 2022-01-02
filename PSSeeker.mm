@@ -29,7 +29,7 @@
 }
 
 -(BOOL)sendVexillariusMessage:(NSString *)bundleIdentifier title:(NSString *)title subtitle:(NSString *)subtitle imageName:(NSString *)imageName timeout:(double)timeout option:(PSNymphBannerOption)option{
-	return [_messagingCenter sendMessageAndReceiveReplyName:@"sendVexillariusMessage" userInfo:@{
+	return [_messagingCenter sendMessageName:@"sendVexillariusMessage" userInfo:@{
 		@"bundleIdentifier" : bundleIdentifier ?: @"",
 		@"title" : title ?: @"Unlocked with Watch",
 		@"subtitle" : subtitle ?: @"Perseus",
