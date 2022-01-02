@@ -87,7 +87,7 @@ __strong NSString **harpePtr = &harpe;
 					HBLogDebug(@"advertisedBanner: %d", advertisedBanner ? 1 : 0);
 					HBLogDebug(@"advertisedUnlockApps: %d", advertisedUnlockApps ? 1 : 0);
 					HBLogDebug(@"advertisedinSession: %d", advertisedinSession ? 1 : 0);
-
+					
 					
 					if (advertisedEnabled && advertisedUnlockApps && (advertisedUnlockedWithPerseus || advertisedinSession) && advertisedPerseus.length > 0 && advertisedHarpe.length > 0){
 						
@@ -116,17 +116,20 @@ __strong NSString **harpePtr = &harpe;
 									long long result = [passcodeHelper verifyPasswordUsingAKS:[LASecureData secureDataWithString:passcode] acmContext:weakSelf.cachedExternalizedContext.externalizedContext userId:weakSelf.internalInfo[@"UserId"] policy:weakSelf.policy options:weakSelf.options];
 									
 									if (result == 0){
-										[weakSelf uiSuccessWithResult:@{
-											@"Result" : @{
-												@3 : @YES
-											}
-										}];
 										if (advertisedPokeType > 0){
 											[seeker pokeGizmo:advertisedPokeType];
 										}
 										if (advertisedBanner){
-											[seeker sendVexillariusMessage:self.internalInfo[@"CallerId"] title:@"Authenticated" subtitle:@"Perseus" imageName:@"WatchSide" timeout:2.0 option:PSNymphBannerOptionSubtitleAsAppName];
+											[seeker sendVexillariusMessage:weakSelf.internalInfo[@"CallerId"] title:@"Authenticated" subtitle:@"Perseus" imageName:@"WatchUnlock" timeout:2.0 option:PSNymphBannerOptionSubtitleAsAppName];
 										}
+										dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+											[weakSelf uiSuccessWithResult:@{
+												@"Result" : @{
+														@3 : @YES
+												}
+											}];
+										});
+										
 									}else{
 										[weakSelf uiFailureWithError:[LAErrorHelper internalErrorWithMessage:@"Unexpected error while attempting to unlock using Perseus."]];
 									}
