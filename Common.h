@@ -28,3 +28,4 @@
 #define SCREEN_ON_NN @"com.apple.springboardservices.eventobserver.internalSBSEventObserverEventUndimmed"
 #define SCREEN_OFF_NN @"com.apple.springboardservices.eventobserver.internalSBSEventObserverEventDimmed"
 
+#define APPS_UNLOCK_BANNER_COOLOFF_INTERVAL 3.0

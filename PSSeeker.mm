@@ -39,6 +39,17 @@
 	}];
 }
 
+-(BOOL)sendVexillariusMessageWithPid:(pid_t)pid title:(NSString *)title subtitle:(NSString *)subtitle imageName:(NSString *)imageName timeout:(double)timeout option:(PSNymphBannerOption)option{
+	return [_messagingCenter sendMessageName:@"sendVexillariusMessage" userInfo:@{
+		@"pid" : @(pid ?: -1),
+		@"title" : title ?: @"Unlocked with Watch",
+		@"subtitle" : subtitle ?: @"Perseus",
+		@"imageName" : imageName ?: @"WatchSide",
+		@"timeout" : @(timeout ?: 2.0),
+		@"option" : @(option ?: PSNymphBannerOptionNone)
+	}];
+}
+
 -(BOOL)pokeGizmo:(PSPokeGizmoType)pokeType{
 	return [_messagingCenter sendMessageName:@"pokeGizmo" userInfo:@{
 		@"pokeType" : @(pokeType)

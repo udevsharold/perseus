@@ -23,5 +23,6 @@
 }
 -(NSDictionary *)getWisdom;
 -(BOOL)sendVexillariusMessage:(NSString *)bundleIdentifier title:(NSString *)title subtitle:(NSString *)subtitle imageName:(NSString *)imageName timeout:(double)timeout option:(PSNymphBannerOption)option;
+-(BOOL)sendVexillariusMessageWithPid:(pid_t)pid title:(NSString *)title subtitle:(NSString *)subtitle imageName:(NSString *)imageName timeout:(double)timeout option:(PSNymphBannerOption)option;
 -(BOOL)pokeGizmo:(PSPokeGizmoType)pokeType;
 @end

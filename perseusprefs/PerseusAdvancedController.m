@@ -44,7 +44,7 @@
         
 		//unlock apps
 		PSSpecifier *unlockAppsGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
-		[unlockAppsGroupSpec setProperty:@"Authenticate apps using Apple Watch. iPhone must be unlocked via Perseus and the app required to accepts authentication using device passcode." forKey:@"footerText"];
+		[unlockAppsGroupSpec setProperty:@"Authenticate apps using Apple Watch. iPhone must be unlocked via Perseus and the app required to accepts authentication using device passcode. Some apps are not compatible." forKey:@"footerText"];
 		[rootSpecifiers addObject:unlockAppsGroupSpec];
 		
 		PSSpecifier *unlockAppsSpec = [PSSpecifier preferenceSpecifierNamed:@"Unlock Apps" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:nil cell:PSSwitchCell edit:nil];
@@ -70,7 +70,7 @@
         
         //Auto lock iPhone
         PSSpecifier *autoLockIPhoneGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
-        [autoLockIPhoneGroupSpec setProperty:@"Lock iPhone in the event where Apple Watch is not longer authenticated." forKey:@"footerText"];
+        [autoLockIPhoneGroupSpec setProperty:@"Lock iPhone in the event where Apple Watch is no longer authenticated." forKey:@"footerText"];
         [rootSpecifiers addObject:autoLockIPhoneGroupSpec];
         
         PSSpecifier *autoLockIphoneSpec = [PSSpecifier preferenceSpecifierNamed:@"Auto Lock iPhone" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:nil cell:PSSwitchCell edit:nil];

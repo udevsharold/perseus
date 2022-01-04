@@ -79,3 +79,9 @@ void pokeGizmo(PSPokeGizmoType type){
 	}
 	
 }
+
+NSString *username(uid_t uid){
+	struct passwd *pw;
+	pw = getpwuid(uid);
+	return @(pw->pw_name);
+}

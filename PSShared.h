@@ -13,6 +13,7 @@
 //    along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #import "Common.h"
+#import <pwd.h>
 #import "PrivateHeaders.h"
 
 #ifndef PERSEUSPREFS
@@ -38,6 +39,7 @@ extern "C" {
 #endif
 	
 void pokeGizmo(PSPokeGizmoType type);
+NSString *username(uid_t uid);
 
 #ifdef __cplusplus
 }

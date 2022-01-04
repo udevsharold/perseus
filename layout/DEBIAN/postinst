@@ -1,7 +1,8 @@
 #!/bin/bash
 
 echo "Killing sharingd..."
-
 killall -9 sharingd || true
+echo "Killing coreauthd..."
+killall -9 coreauthd || true
 
 exit 0

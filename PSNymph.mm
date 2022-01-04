@@ -35,10 +35,12 @@ extern __strong NSString **harpePtr;
 -(instancetype)init{
 	self = [super init];
 	if (self) {
+		_processId = getpid();
+		
 		_messagingCenter = [CPDistributedMessagingCenter centerNamed:PERSEUS_NYMPH_CENTER_IDENTIFIER];
 		rocketbootstrap_distributedmessagingcenter_apply(_messagingCenter);
 		
-		[_messagingCenter runServerOnCurrentThreadProtectedByEntitlement:@"com.apple.keystore.device"];
+		[_messagingCenter runServerOnCurrentThreadProtectedByEntitlement:@"com.apple.private.applecredentialmanager.allow"];
 		[_messagingCenter registerForMessageName:@"getWisdom" target:self selector:@selector(getWisdom:withUserInfo:)];
 		[_messagingCenter registerForMessageName:@"sendVexillariusMessage" target:self selector:@selector(sendVexillariusMessage:withUserInfo:)];
 		[_messagingCenter registerForMessageName:@"pokeGizmo" target:self selector:@selector(pokeGizmo:withUserInfo:)];
@@ -63,12 +65,25 @@ extern __strong NSString **harpePtr;
 	};
 }
 
+-(NSString *)_bundleIdentifierFromPid:(pid_t)pid{
+	if (pid == _processId) return @"com.apple.springboard";
+	SBApplicationController *sbAppController = [objc_getClass("SBApplicationController") sharedInstanceIfExists];
+	SBApplication *sbApp = [sbAppController applicationWithPid:pid];
+	if (!sbApp || !sbApp.bundleIdentifier) return nil;
+	return sbApp.bundleIdentifier;
+}
+
 -(void)sendVexillariusMessage:(NSString *)name withUserInfo:(NSDictionary *)userInfo{
 	PSNymphBannerOption option = [userInfo[@"option"] intValue];
 	
 	LSApplicationProxy *appProxy;
 	if (option > PSNymphBannerOptionNone){
-		NSString *bundleIdentifier = userInfo[@"bundleIdentifier"];
+		NSString *bundleIdentifier;
+		if (userInfo[@"bundleIdentifier"]){
+			bundleIdentifier = userInfo[@"bundleIdentifier"];
+		}else if (userInfo[@"pid"]){
+			bundleIdentifier = [self _bundleIdentifierFromPid:[userInfo[@"pid"] intValue]];
+		}
 		appProxy = [objc_getClass("LSApplicationProxy") applicationProxyForIdentifier:bundleIdentifier];
 	}
 	

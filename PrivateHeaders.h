@@ -51,6 +51,15 @@
 +(BOOL)isVisible;
 @end
 
+@interface SBApplication : NSObject
+@property (nonatomic,readonly) NSString * bundleIdentifier;
+@end
+
+@interface SBApplicationController : NSObject
++(id)sharedInstanceIfExists;
+-(SBApplication *)applicationWithPid:(int)arg1 ;
+@end
+
 //Sharing
 @interface SFBLEDevice : NSObject
 @property (assign,nonatomic) BOOL paired;
@@ -226,6 +235,8 @@
 
 //CoreAuthUI
 @interface SBUIRemoteAlertServiceViewController : UIViewController
+-(id)_remoteViewControllerProxy;
+
 @end
 
 @interface LACachedExternalizedContext : NSObject
@@ -233,21 +244,53 @@
 @property (nonatomic,readonly) NSData * externalizedContext;
 @end
 
+@protocol LAContextExternalizationProt <NSObject>
+- (void)authMethodWithReply:(void (^)(NSData *, NSError *))arg1;
+- (void)externalizedContextWithReply:(void (^)(NSData *, NSError *))arg1;
+
+@optional
+- (NSData *)synchronousExternalizedContextWithError:(id *)arg1;
+@end
+
+@protocol LAUIMechanism <LAContextExternalizationProt>
+- (void)internalInfoWithReply:(void (^)(NSDictionary *))arg1;
+- (void)uiFailureWithError:(NSError *)arg1;
+- (void)uiSuccessWithResult:(NSDictionary *)arg1;
+- (void)uiEvent:(long long)arg1 options:(NSDictionary *)arg2;
+@end
+
+
+@protocol LABackoffCounter
+- (void)currentBackoffErrorWithReply:(void (^)(NSError *))arg1;
+- (void)actionSuccess;
+- (void)actionBackoffWithReply:(void (^)(NSError *))arg1;
+- (void)actionFailureWithReply:(void (^)(NSError *))arg1;
+@end
+
 @interface TransitionViewController : SBUIRemoteAlertServiceViewController
 @property(readonly, nonatomic) LACachedExternalizedContext *cachedExternalizedContext;
 @property(readonly, nonatomic) NSDictionary *options;
 @property(readonly, nonatomic) NSDictionary *internalInfo;
 @property(readonly, nonatomic) long long policy;
+@property(readonly, nonatomic) id <LAUIMechanism> mechanism;
+@property(retain, nonatomic) id <LABackoffCounter> backoffCounter;
++ (TransitionViewController *)rootController;
 - (void)uiSuccessWithResult:(NSDictionary *)arg1;
 - (void)uiFailureWithError:(id)arg1;
 - (void)_performOnMainQueueWhenAppeared:(id /*block*/)arg1;
+- (void)_resetUI;
+- (void)_dismissRemoteUIWithCompletionHandler:(id /*block*/)arg1;
+- (void)dismissRemoteUIWasInvalidated:(BOOL)arg1 completionHandler:(id /*block*/)arg2;
 @end
 
 @interface FaceIdViewController : TransitionViewController
 - (void)_showFailAlert;
+- (void)dismissChildWithCompletionHandler:(id /*block*/)arg1;
+- (void)_destroyViewControllers;
+- (void)_dismiss;
 @end
 
-
+//LocalAuthentication
 @interface LASecureData : NSObject
 +(id)secureDataWithString:(id)arg1 ;
 @end
@@ -261,3 +304,137 @@
 @interface LAErrorHelper : NSObject
 +(id)internalErrorWithMessage:(id)arg1 ;
 @end
+
+@interface LAUtils : NSObject
++(BOOL)isMultiUser;
+@end
+
+//coreauthd
+@protocol LAOriginatorProt
+@property(readonly, nonatomic) unsigned long long originatorId;
+//@property(readonly, nonatomic) id <LAContextCallbackXPC> callback;
+//@property(readonly, nonatomic) CDStruct_4c969caf auditToken;
+@property(readonly, nonatomic) int auditSessionId;
+@property(readonly, nonatomic) unsigned int userId;
+@property(readonly, nonatomic) int processId;
+@property(readonly, nonatomic) BOOL cApiOrigin;
+- (BOOL)checkEntitlement:(NSString *)arg1;
+@end
+
+@interface Request : NSObject
+@property (nonatomic,readonly) BOOL interactive;
+@end
+
+@interface EvaluationRequest : Request
+@property (nonatomic,readonly) NSDictionary * options;
+@property (nonatomic,readonly) BOOL isUnlock;
+@property (nonatomic,readonly) long long purpose;
+@property (nonatomic,readonly) long long policy;
+-(id)initWithAcl:(id)arg1 operation:(id)arg2 options:(id)arg3 ;
+-(id)initWithPolicy:(long long)arg1 options:(id)arg2 ;
+-(void)updateOptions:(id)arg1 ;
+@end
+
+
+@protocol LAUIDelegate
+@required
+-(void)event:(long long)arg1 params:(id)arg2 reply:(/*^block*/id)arg3;
+@end
+
+@protocol LAContextServerEvaluationProt
+- (void)setShowingCoachingHint:(BOOL)arg1 event:(long long)arg2 originator:(id <LAOriginatorProt>)arg3 reply:(void (^)(BOOL, NSError *))arg4;
+- (void)resetEvent:(long long)arg1 originator:(id <LAOriginatorProt>)arg2 reply:(void (^)(BOOL, NSError *))arg3;
+- (void)retryEvent:(long long)arg1 originator:(id <LAOriginatorProt>)arg2 reply:(void (^)(BOOL, NSError *))arg3;
+- (void)setOptions:(id)arg1 forInternalOperation:(long long)arg2 originator:(id <LAOriginatorProt>)arg3 reply:(void (^)(BOOL, NSError *))arg4;
+- (void)optionsForInternalOperation:(long long)arg1 originator:(id <LAOriginatorProt>)arg2 reply:(void (^)(id, NSError *))arg3;
+- (void)checkCredentialSatisfied:(long long)arg1 policy:(long long)arg2 reply:(void (^)(BOOL, NSError *))arg3;
+- (void)credentialOfType:(long long)arg1 originator:(id <LAOriginatorProt>)arg2 reply:(void (^)(NSData *, NSError *))arg3;
+- (void)setCredential:(NSData *)arg1 type:(long long)arg2 options:(NSDictionary *)arg3 originator:(id <LAOriginatorProt>)arg4 reply:(void (^)(BOOL, NSError *))arg5;
+- (void)isCredentialSet:(long long)arg1 originator:(id <LAOriginatorProt>)arg2 reply:(void (^)(BOOL, NSError *))arg3;
+- (void)evaluateACL:(NSData *)arg1 operation:(id)arg2 options:(NSDictionary *)arg3 uiDelegate:(id <LAUIDelegate>)arg4 originator:(id <LAOriginatorProt>)arg5 request:(EvaluationRequest *)arg6 reply:(void (^)(NSDictionary *, NSError *))arg7;
+- (void)evaluatePolicy:(long long)arg1 options:(NSDictionary *)arg2 uiDelegate:(id <LAUIDelegate>)arg3 originator:(id <LAOriginatorProt>)arg4 request:(EvaluationRequest *)arg5 reply:(void (^)(NSDictionary *, NSError *))arg6;
+@end
+
+@protocol LAContextClientEvaluationProt
+- (void)setOptions:(id)arg1 forInternalOperation:(long long)arg2 reply:(void (^)(BOOL, NSError *))arg3;
+- (void)optionsForInternalOperation:(long long)arg1 reply:(void (^)(id, NSError *))arg2;
+- (void)credentialOfType:(long long)arg1 reply:(void (^)(NSData *, NSError *))arg2;
+- (void)invalidateWithReply:(void (^)(BOOL, NSError *))arg1;
+- (void)setCredential:(NSData *)arg1 type:(long long)arg2 reply:(void (^)(BOOL, NSError *))arg3;
+- (void)isCredentialSet:(long long)arg1 reply:(void (^)(BOOL, NSError *))arg2;
+- (void)evaluateACL:(NSData *)arg1 operation:(id)arg2 options:(NSDictionary *)arg3 uiDelegate:(id <LAUIDelegate>)arg4 reply:(void (^)(NSDictionary *, NSError *))arg5;
+- (void)evaluatePolicy:(long long)arg1 options:(NSDictionary *)arg2 uiDelegate:(id <LAUIDelegate>)arg3 reply:(void (^)(NSDictionary *, NSError *))arg4;
+@end
+
+@protocol LAContextServerSideProt <LAContextServerEvaluationProt>
+@end
+
+@interface ContextPlugin : NSObject <LAContextServerEvaluationProt>
+@property (nonatomic,readonly) LACachedExternalizedContext * cachedExternalizedContext;
+@property (nonatomic,retain) NSDictionary * resultInfo;
+@end
+
+@interface Context : NSObject <LAContextServerSideProt>
+@property(readonly, nonatomic) NSUUID *uuid;
+@property(readonly, nonatomic) NSData *externalizedContext;
+@property(readonly, nonatomic) ContextPlugin *plugin;
+- (BOOL)_hasProtectedOptions:(id)arg1;
+- (id)_updateOptionsWithServerProperties:(id)arg1;
+@end
+
+@protocol LAContextXPC <LAContextClientEvaluationProt>
+@end
+
+@interface ContextProxy : NSObject <LAContextXPC, LAOriginatorProt>
+@property(readonly, nonatomic) Context *managedContext;
+@property(readonly, nonatomic) unsigned int userId;
+@property(readonly, nonatomic) int processId;
+@end
+
+@interface ContextManager : NSObject
++ (id)sharedInstance;
+- (id)loadModule:(long long)arg1 error:(id *)arg2;
+@end
+
+//DaemonUtils
+@interface BiometryHelper : NSObject
++(id)sharedInstance;
+-(NSData *)biometryDatabaseHashForUser:(NSString *)username error:(NSError **)error ;
+@end
+
+@interface InstalledAppsCache : NSObject
++(id)sharedInstance;
+-(id)_bundleIDFromUUID:(id)arg1 ;
+-(id)appNameForUUID:(id)arg1 bundleId:(id*)arg2 ;
+-(id)lsBundleIDForUUID:(id)arg1 ;
+@end
+
+
+//MobileKeyBag
+#define kMobileKeyBagDisabled 3
+#define kMobileKeyBagSuccess (0)
+#define kMobileKeyBagError (-1)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int MKBGetDeviceLockState(CFDictionaryRef options);
+int MKBUnlockDevice(CFDataRef passcode, CFDictionaryRef options);
+
+#ifdef __cplusplus
+}
+#endif
+
+//LAContext
+//Options
+#define kLAOptionUserFallback                   1
+#define kLAOptionAuthenticationReason           2
+#define kLAOptionReturnFingerDatabaseHash       1015
+#define kLAOptionReturnBiometryDatabaseHash     kLAOptionReturnFingerDatabaseHash
+
+//Results
+#define kLAResultPassedBiometry                    1
+#define kLAResultPassedPasscode                    3
+#define kLAResultFingerDatabaseHash                7
+#define kLAResultBiometryDatabaseHash              kLAResultFingerDatabaseHash

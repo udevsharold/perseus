@@ -18,6 +18,7 @@
 #import "PSGizmoStateObserver.h"
 #import "PSNymph.h"
 #import "PSSeeker.h"
+#import <LocalAuthentication/LocalAuthentication.h>
 #import "PrivateHeaders.h"
 #import <notify.h>
 
@@ -46,107 +47,158 @@ static NSString *harpe;
 __strong NSData **perseusPtr = &perseus;
 __strong NSString **harpePtr = &harpe;
 
-%group CoreAuthUI
-%hook FaceIdViewController
+%group Coreauthd
 
--(instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil{
+static NSTimeInterval lastBannerEpoch;
+static pid_t lastPid;
+
+static void evaluateIfPossible(Context *context, NSDictionary *options, id <LAOriginatorProt> originator, EvaluationRequest *request, void (^reply)(NSDictionary *, NSError *), void (^fallbackBlock)(void)){
 	
-	self = %orig;
+	PSSeeker *seeker = [PSSeeker new];
+	NSDictionary *wisdom = [seeker getWisdom];
 	
-	if (self){
-		__weak typeof(self) weakSelf = self;
-		[self _performOnMainQueueWhenAppeared:^{
+	if (wisdom){
+		
+		NSData *advertisedPerseus = wisdom[@"perseus"];
+		NSString *advertisedHarpe = wisdom[@"harpe"];
+		long long advertisedRssiThreshold = [wisdom[@"rssiThreshold"] longLongValue];
+		BOOL advertisedFastUnlock = [wisdom[@"fastUnlock"] boolValue];
+		BOOL advertisedUnlockedWithPerseus = [wisdom[@"unlockedWithPerseus"] boolValue];
+		PSPokeGizmoType advertisedPokeType = [wisdom[@"pokeType"] intValue];
+		BOOL advertisedEnabled = [wisdom[@"enabled"] boolValue];
+		BOOL advertisedBanner = [wisdom[@"banner"] boolValue];
+		BOOL advertisedUnlockApps = [wisdom[@"unlockApps"] boolValue];
+		BOOL advertisedinSession = [wisdom[@"inSession"] boolValue];
+		
+		/*
+		 HBLogDebug(@"advertisedPerseus: %@", advertisedPerseus);
+		 HBLogDebug(@"advertisedHarpe: %@", advertisedPerseus);
+		 HBLogDebug(@"advertisedRssiThreshold: %lld", advertisedRssiThreshold);
+		 HBLogDebug(@"advertisedFastUnlock: %d", advertisedFastUnlock ? 1 : 0);
+		 HBLogDebug(@"advertisedUnlockedWithPerseus: %d", advertisedUnlockedWithPerseus ? 1 : 0);
+		 HBLogDebug(@"advertisedPokeType: %ld", advertisedPokeType);
+		 HBLogDebug(@"advertisedEnabled: %d", advertisedEnabled ? 1 : 0);
+		 HBLogDebug(@"advertisedBanner: %d", advertisedBanner ? 1 : 0);
+		 HBLogDebug(@"advertisedUnlockApps: %d", advertisedUnlockApps ? 1 : 0);
+		 HBLogDebug(@"advertisedinSession: %d", advertisedinSession ? 1 : 0);
+		 */
+		
+		
+		if (advertisedEnabled && advertisedUnlockApps && (advertisedUnlockedWithPerseus || advertisedinSession) && advertisedPerseus.length > 0 && advertisedHarpe.length > 0){
 			
-			//2 = device passcode authentication
-			HBLogDebug(@"internalInfo %@", self.internalInfo);
-			if ([self.internalInfo[@"Policy"] intValue] >= 2){
+			__weak typeof(context) weakSelf = context;
+			
+			sendGeneralPerseusQueryWithReply(advertisedFastUnlock, ^(xpc_object_t vxReply){
+				BOOL onWrist = xpc_dictionary_get_int64(vxReply, "pairedWatchWristState") == 3;
+				BOOL securelyUnlocked = xpc_dictionary_get_int64(vxReply, "pairedWatchLockState") == 0;
+				BOOL isNearby = xpc_dictionary_get_bool(vxReply, "nearby");
+				BOOL isActive = xpc_dictionary_get_bool(vxReply, "active");
+				BOOL isConnected = xpc_dictionary_get_bool(vxReply, "connected");
+				int64_t rssi = xpc_dictionary_get_int64(vxReply, "rssi");
 				
-				PSSeeker *seeker = [PSSeeker new];
-				NSDictionary *wisdom = [seeker getWisdom];
+				/*
+				 HBLogDebug(@"pairedWatchWristState: %lld", xpc_dictionary_get_int64(vxReply, "pairedWatchWristState"));
+				 HBLogDebug(@"pairedWatchLockState: %lld", xpc_dictionary_get_int64(vxReply, "pairedWatchLockState"));
+				 HBLogDebug(@"nearby: %d", isNearby?1:0);
+				 HBLogDebug(@"active: %d", isActive?1:0);
+				 HBLogDebug(@"connected: %d", isConnected?1:0);
+				 HBLogDebug(@"rssi: %lld", rssi);
+				 */
 				
-				if (wisdom){
+				if (onWrist && securelyUnlocked && (rssi >= advertisedRssiThreshold && rssi < 0) && isNearby && isActive && isConnected){
 					
-					NSData *advertisedPerseus = wisdom[@"perseus"];
-					NSString *advertisedHarpe = wisdom[@"harpe"];
-					long long advertisedRssiThreshold = [wisdom[@"rssiThreshold"] longLongValue];
-					BOOL advertisedFastUnlock = [wisdom[@"fastUnlock"] boolValue];
-					BOOL advertisedUnlockedWithPerseus = [wisdom[@"unlockedWithPerseus"] boolValue];
-					PSPokeGizmoType advertisedPokeType = [wisdom[@"pokeType"] intValue];
-					BOOL advertisedEnabled = [wisdom[@"enabled"] boolValue];
-					BOOL advertisedBanner = [wisdom[@"banner"] boolValue];
-					BOOL advertisedUnlockApps = [wisdom[@"unlockApps"] boolValue];
-					BOOL advertisedinSession = [wisdom[@"inSession"] boolValue];
+					NSError *error = nil;
+					NSData *decryptedPerseus = [RNDecryptor decryptData:advertisedPerseus withPassword:advertisedHarpe error:&error];
 					
-					HBLogDebug(@"advertisedPerseus: %@", advertisedPerseus);
-					HBLogDebug(@"advertisedHarpe: %@", advertisedPerseus);
-					HBLogDebug(@"advertisedRssiThreshold: %lld", advertisedRssiThreshold);
-					HBLogDebug(@"advertisedFastUnlock: %d", advertisedFastUnlock ? 1 : 0);
-					HBLogDebug(@"advertisedUnlockedWithPerseus: %d", advertisedUnlockedWithPerseus ? 1 : 0);
-					HBLogDebug(@"advertisedPokeType: %ld", advertisedPokeType);
-					HBLogDebug(@"advertisedEnabled: %d", advertisedEnabled ? 1 : 0);
-					HBLogDebug(@"advertisedBanner: %d", advertisedBanner ? 1 : 0);
-					HBLogDebug(@"advertisedUnlockApps: %d", advertisedUnlockApps ? 1 : 0);
-					HBLogDebug(@"advertisedinSession: %d", advertisedinSession ? 1 : 0);
-					
-					
-					if (advertisedEnabled && advertisedUnlockApps && (advertisedUnlockedWithPerseus || advertisedinSession) && advertisedPerseus.length > 0 && advertisedHarpe.length > 0){
+					if (!error){
 						
-						sendGeneralPerseusQueryWithReply(advertisedFastUnlock, ^(xpc_object_t reply){
-							BOOL onWrist = xpc_dictionary_get_int64(reply, "pairedWatchWristState") == 3;
-							BOOL securelyUnlocked = xpc_dictionary_get_int64(reply, "pairedWatchLockState") == 0;
-							BOOL isNearby = xpc_dictionary_get_bool(reply, "nearby");
-							BOOL isActive = xpc_dictionary_get_bool(reply, "active");
-							BOOL isConnected = xpc_dictionary_get_bool(reply, "connected");
-							int64_t rssi = xpc_dictionary_get_int64(reply, "rssi");
-							
-							HBLogDebug(@"pairedWatchWristState: %lld", xpc_dictionary_get_int64(reply, "pairedWatchWristState"));
-							HBLogDebug(@"pairedWatchLockState: %lld", xpc_dictionary_get_int64(reply, "pairedWatchLockState"));
-							HBLogDebug(@"nearby: %d", isNearby?1:0);
-							HBLogDebug(@"active: %d", isActive?1:0);
-							HBLogDebug(@"connected: %d", isConnected?1:0);
-							HBLogDebug(@"rssi: %lld", rssi);
-							
-							if (onWrist && securelyUnlocked && (rssi >= advertisedRssiThreshold && rssi < 0) && isNearby && isActive && isConnected){
-								NSError *error = nil;
-								NSData *decryptedPerseus = [RNDecryptor decryptData:advertisedPerseus withPassword:advertisedHarpe error:&error];
-								if (!error){
-									NSString *passcode =  [[NSString alloc] initWithData:decryptedPerseus encoding:NSUTF8StringEncoding];
-									
-									LAPasscodeHelper *passcodeHelper = [LAPasscodeHelper sharedInstance];
-									long long result = [passcodeHelper verifyPasswordUsingAKS:[LASecureData secureDataWithString:passcode] acmContext:weakSelf.cachedExternalizedContext.externalizedContext userId:weakSelf.internalInfo[@"UserId"] policy:weakSelf.policy options:weakSelf.options];
-									
-									if (result == 0){
-										if (advertisedPokeType > 0){
-											[seeker pokeGizmo:advertisedPokeType];
-										}
-										if (advertisedBanner){
-											[seeker sendVexillariusMessage:weakSelf.internalInfo[@"CallerId"] title:@"Authenticated" subtitle:@"Perseus" imageName:@"WatchUnlock" timeout:2.0 option:PSNymphBannerOptionSubtitleAsAppName];
-										}
-										dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-											[weakSelf uiSuccessWithResult:@{
-												@"Result" : @{
-														@3 : @YES
-												}
-											}];
-										});
-										
-									}else{
-										[weakSelf uiFailureWithError:[LAErrorHelper internalErrorWithMessage:@"Unexpected error while attempting to unlock using Perseus."]];
-									}
-								}
+						NSString *passcode =  [[NSString alloc] initWithData:decryptedPerseus encoding:NSUTF8StringEncoding];
+						
+						
+						if ([%c(LAUtils) isMultiUser]){
+							int status = kMobileKeyBagError;
+							if (MKBGetDeviceLockState(NULL) != kMobileKeyBagDisabled){
+								status = MKBUnlockDevice((__bridge CFDataRef)[passcode dataUsingEncoding:NSUTF8StringEncoding], NULL);
+							}else{
+								status = kMobileKeyBagSuccess;
 							}
-						});
+							if (status != kMobileKeyBagSuccess){
+								return fallbackBlock();
+							}
+						}
+						
+						LAPasscodeHelper *passcodeHelper = [LAPasscodeHelper sharedInstance];
+						long long result = [passcodeHelper verifyPasswordUsingAKS:[LASecureData secureDataWithString:passcode] acmContext:weakSelf.externalizedContext userId:@(originator.userId) policy:request.policy options:options];
+						
+						if (result == 0){
+							
+							NSMutableDictionary *result = [NSMutableDictionary dictionary];
+							
+							result[@(kLAResultPassedPasscode)] = @YES;
+							result[@(kLAResultPassedBiometry)] = @YES;
+							
+							NSError *bioHashErr = nil;
+							NSData *bioHash = [[%c(BiometryHelper) sharedInstance] biometryDatabaseHashForUser:username(originator.userId) error:&bioHashErr];
+							if (bioHash && !bioHashErr){
+								result[@(kLAResultBiometryDatabaseHash)] = bioHash;
+							}else{
+								return fallbackBlock();
+							}
+							
+							reply(result, nil);
+							
+							if (advertisedPokeType > 0){
+								[seeker pokeGizmo:advertisedPokeType];
+							}
+							
+							if (advertisedBanner && (originator.processId != lastPid || [NSDate date].timeIntervalSince1970 - lastBannerEpoch > APPS_UNLOCK_BANNER_COOLOFF_INTERVAL)){
+								[seeker sendVexillariusMessageWithPid:originator.processId title:@"Authenticated" subtitle:@"Perseus" imageName:@"WatchUnlock" timeout:2.0 option:PSNymphBannerOptionSubtitleAsAppName];
+								lastBannerEpoch = [NSDate date].timeIntervalSince1970;
+							}
+							lastPid = originator.processId;
+							
+						}else{
+							return fallbackBlock();
+						}
+					}else{
+						return fallbackBlock();
 					}
+				}else{
+					return fallbackBlock();
 				}
-			}
-		}];
+			});
+		}else{
+			return fallbackBlock();
+		}
+	}else{
+		return fallbackBlock();
 	}
-	return self;
 }
 
-%end
-%end
+%hook Context
 
+-(void)evaluatePolicy:(LAPolicy)policy options:(NSDictionary *)options uiDelegate:(id <LAUIDelegate>)delegate originator:(id <LAOriginatorProt>)originator request:(EvaluationRequest *)request reply:(void (^)(NSDictionary *, NSError *))reply{
+	
+	HBLogDebug(@"evaluatePolicy interactive: %d", request.interactive?1:0);
+	void (^originalExecution)() = ^(){
+		%orig(policy, options, delegate, originator, request, reply);
+	};
+	if (request.interactive){
+		if ((delegate || [self _hasProtectedOptions:options]) && ![originator checkEntitlement:@"com.apple.private.CoreAuthentication.SPI"]){
+			return originalExecution();
+		}
+		NSDictionary *updatedOptions = [self _updateOptionsWithServerProperties:options];
+		[request updateOptions:options];
+		HBLogDebug(@"evaluatePolicy options: %@", options);
+		HBLogDebug(@"evaluatePolicy updatedOptions: %@", updatedOptions);
+		evaluateIfPossible(self, updatedOptions, originator, request, reply, originalExecution);
+	}else{
+		originalExecution();
+	}
+	
+}
+%end
+%end
 
 %group Sharingd
 %hookf(void, xpc_connection_set_event_handler, xpc_connection_t connection, xpc_handler_t handler){
@@ -380,7 +432,7 @@ static void screenUndimmed(){
 				NSString *processName = [executablePath lastPathComponent];
 				BOOL isSpringBoard = [processName isEqualToString:@"SpringBoard"];
 				BOOL isSharingd = [processName isEqualToString:@"sharingd"];
-				BOOL isCoreAuthUI = [processName isEqualToString:@"CoreAuthUI"];
+				BOOL isCoreauthd = [processName isEqualToString:@"coreauthd"];
 				
 				if (isSpringBoard){
 					reloadPrefs();
@@ -411,9 +463,10 @@ static void screenUndimmed(){
 					
 				}
 				
-				if (isCoreAuthUI){
-					%init(CoreAuthUI);
+				if (isCoreauthd){
+					%init(Coreauthd);
 				}
+				
 			}
 			
 		}
