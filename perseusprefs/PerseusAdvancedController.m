@@ -44,7 +44,7 @@
         
 		//unlock apps
 		PSSpecifier *unlockAppsGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
-		[unlockAppsGroupSpec setProperty:@"Authenticate apps using Apple Watch. iPhone must be unlocked via Perseus and the app required to accepts authentication using device passcode. Some apps are not compatible." forKey:@"footerText"];
+		[unlockAppsGroupSpec setProperty:@"Authenticate apps using Apple Watch. iPhone must be unlocked via Perseus and the app required to accepts authentication using device passcode. Some apps are incompatible and could be blacklisted." forKey:@"footerText"];
 		[rootSpecifiers addObject:unlockAppsGroupSpec];
 		
 		PSSpecifier *unlockAppsSpec = [PSSpecifier preferenceSpecifierNamed:@"Unlock Apps" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:nil cell:PSSwitchCell edit:nil];
@@ -54,6 +54,21 @@
 		[unlockAppsSpec setProperty:PERSEUS_IDENTIFIER forKey:@"defaults"];
 		[unlockAppsSpec setProperty:PREFS_CHANGED_NN forKey:@"PostNotification"];
 		[rootSpecifiers addObject:unlockAppsSpec];
+		
+		//blacklist
+		PSSpecifier *blacklistAppsSpec = [PSSpecifier preferenceSpecifierNamed:@"Blacklist Apps" target:self set:@selector(setPreferenceValue:specifier:) get:@selector(readPreferenceValue:) detail:NSClassFromString(@"ATLApplicationListMultiSelectionController") cell:PSLinkListCell edit:nil];
+		[blacklistAppsSpec setProperty:PERSEUS_IDENTIFIER forKey:@"defaults"];
+		[blacklistAppsSpec setProperty:@"Blacklist Apps" forKey:@"label"];
+		[blacklistAppsSpec setProperty:@[
+			@{@"sectionType":@"All"},
+		] forKey:@"sections"];
+		[blacklistAppsSpec setProperty:@"appsUnlockBlacklistedApps" forKey:@"key"];
+		[blacklistAppsSpec setProperty:@NO forKey:@"defaultApplicationSwitchValue"];
+		[blacklistAppsSpec setProperty:@YES forKey:@"useSearchBar"];
+		[blacklistAppsSpec setProperty:@YES forKey:@"hideSearchBarWhileScrolling"];
+		[blacklistAppsSpec setProperty:@YES forKey:@"alphabeticIndexingEnabled"];
+		[blacklistAppsSpec setProperty:@YES forKey:@"includeIdentifiersInSearch"];
+		[rootSpecifiers addObject:blacklistAppsSpec];
 		
         //Banner
         PSSpecifier *enabledBannerGroupSpec = [PSSpecifier preferenceSpecifierNamed:@"" target:nil set:nil get:nil detail:nil cell:PSGroupCell edit:nil];
@@ -116,7 +131,7 @@
         [pokeTypeSpec setProperty:NSClassFromString(@"PSLinkListCell") forKey:@"cellClass"];
         [pokeTypeSpec setProperty:@"Haptic Feedback" forKey:@"label"];
         [pokeTypeSpec setProperty:@(PSPokeGizmoTypeOnce) forKey:@"default"];
-        [pokeTypeSpec setValues:@[@0, @1, @2/*, @3. @4*/] titles:@[@"Disable", @"Once", @"Double (BETA)"/*, @"Default", @"Prominent"*/]];
+        [pokeTypeSpec setValues:@[@0, @1, @2/*, @3, @4*/] titles:@[@"Disable", @"Once", @"Double (BETA)"/*, @"Default", @"Prominent"*/]];
         [pokeTypeSpec setProperty:PERSEUS_IDENTIFIER forKey:@"defaults"];
         [pokeTypeSpec setProperty:PREFS_CHANGED_NN forKey:@"PostNotification"];
         [pokeTypeSpec setProperty:@"pokeType" forKey:@"key"];

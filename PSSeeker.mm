@@ -24,8 +24,8 @@
 	return self;
 }
 
--(NSDictionary *)getWisdom{
-	return [_messagingCenter sendMessageAndReceiveReplyName:@"getWisdom" userInfo:nil];
+-(NSDictionary *)getWisdom:(NSDictionary *)userInfo{
+	return [_messagingCenter sendMessageAndReceiveReplyName:@"getWisdom" userInfo:userInfo];
 }
 
 -(BOOL)sendVexillariusMessage:(NSString *)bundleIdentifier title:(NSString *)title subtitle:(NSString *)subtitle imageName:(NSString *)imageName timeout:(double)timeout option:(PSNymphBannerOption)option{

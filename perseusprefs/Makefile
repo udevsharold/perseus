@@ -9,6 +9,7 @@ BUNDLE_NAME = PerseusPrefs
 PerseusPrefs_FILES = $(wildcard *.m) ../PSShared.mm ../PSAndromeda.mm
 PerseusPrefs_FRAMEWORKS = UIKit
 PerseusPrefs_PRIVATE_FRAMEWORKS = Preferences
+PerseusPrefs_EXTRA_FRAMEWORKS = AltList
 PerseusPrefs_INSTALL_PATH = /Library/PreferenceBundles
 PerseusPrefs_CFLAGS = -fobjc-arc -DPERSEUSPREFS=1
 

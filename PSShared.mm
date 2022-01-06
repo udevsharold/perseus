@@ -42,41 +42,41 @@ void pokeGizmo(PSPokeGizmoType type){
 	
 	//wake watch
 	sendGeneralPerseusQueryWithReply(YES, ^(xpc_object_t reply){
-	});
-	
-	NSXPCConnection *nacConnection = nacXPCConnection();
-	[[nacConnection remoteObjectProxy] setHapticIntensity:1.0];
-	
-	switch (type) {
-		case PSPokeGizmoTypeOnce:{
-			//Dirty, but works
-			[[nacConnection remoteObjectProxy] setHapticIntensity:1.0];
-			[nacConnection invalidate];
-			break;
-		}
-		case PSPokeGizmoTypeDouble:{
-			//This one is buggy, sometimes it only send one haptic
-			[[nacConnection remoteObjectProxy] setHapticIntensity:1.0];
-			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+		
+		NSXPCConnection *nacConnection = nacXPCConnection();
+		
+		switch (type) {
+			case PSPokeGizmoTypeOnce:{
+				//Dirty, but works
 				[[nacConnection remoteObjectProxy] setHapticIntensity:1.0];
 				[nacConnection invalidate];
-			});
-			break;
+				break;
+			}
+			case PSPokeGizmoTypeDouble:{
+				//This one is buggy, sometimes it only send one haptic
+				[[nacConnection remoteObjectProxy] setHapticIntensity:1.0];
+				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+					[[nacConnection remoteObjectProxy] setHapticIntensity:1.0];
+					[nacConnection invalidate];
+				});
+				break;
+			}
+				/*
+				 case PSPokeGizmoTypeDefault:{
+				 [[nacConnection remoteObjectProxy] setHapticState:1];
+				 break;
+				 }
+				 case PSPokeGizmoTypeProminent:{
+				 [[nacConnection remoteObjectProxy] setHapticState:2];
+				 break;
+				 }
+				 */
+			default:
+				[nacConnection invalidate];
+				break;
 		}
-			/*
-			 case PSPokeGizmoTypeDefault:{
-			 [[nacConnection remoteObjectProxy] setHapticState:1];
-			 break;
-			 }
-			 case PSPokeGizmoTypeProminent:{
-			 [[nacConnection remoteObjectProxy] setHapticState:2];
-			 break;
-			 }
-			 */
-		default:
-			[nacConnection invalidate];
-			break;
-	}
+		
+	});
 	
 }
 

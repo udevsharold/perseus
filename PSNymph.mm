@@ -50,6 +50,22 @@ extern __strong NSString **harpePtr;
 	return self;
 }
 
+-(BOOL)_isAppBlacklisted:(NSString *)bundleIdentifier{
+	if (!bundleIdentifier) return NO;
+	NSArray *appsUnlockBlacklistedApps = valueForKey(@"appsUnlockBlacklistedApps");
+	return [appsUnlockBlacklistedApps containsObject:bundleIdentifier];
+}
+
+-(NSString *)_bundleIdentifierFromUserInfo:(NSDictionary *)userInfo{
+	if (userInfo[@"bundleIdentifier"]){
+		return userInfo[@"bundleIdentifier"];
+	}else if (userInfo[@"pid"]){
+		return [self _bundleIdentifierFromPid:[userInfo[@"pid"] intValue]];
+	}else{
+		return nil;
+	}
+}
+
 -(NSDictionary *)getWisdom:(NSString *)name withUserInfo:(NSDictionary *)userInfo{
 	return @{
 		@"perseus" : *perseusPtr ?: @"",
@@ -61,7 +77,8 @@ extern __strong NSString **harpePtr;
 		@"enabled" : @(enabled),
 		@"banner" : @(banner),
 		@"unlockApps" : @(unlockApps),
-		@"inSession" : @(inSession)
+		@"inSession" : @(inSession),
+		@"appBlacklisted" : @([self _isAppBlacklisted:[self _bundleIdentifierFromUserInfo:userInfo]])
 	};
 }
 
@@ -78,13 +95,7 @@ extern __strong NSString **harpePtr;
 	
 	LSApplicationProxy *appProxy;
 	if (option > PSNymphBannerOptionNone){
-		NSString *bundleIdentifier;
-		if (userInfo[@"bundleIdentifier"]){
-			bundleIdentifier = userInfo[@"bundleIdentifier"];
-		}else if (userInfo[@"pid"]){
-			bundleIdentifier = [self _bundleIdentifierFromPid:[userInfo[@"pid"] intValue]];
-		}
-		appProxy = [objc_getClass("LSApplicationProxy") applicationProxyForIdentifier:bundleIdentifier];
+		appProxy = [objc_getClass("LSApplicationProxy") applicationProxyForIdentifier:[self _bundleIdentifierFromUserInfo:userInfo]];
 	}
 	
 	const char *title = [userInfo[@"title"] UTF8String];

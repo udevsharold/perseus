@@ -55,7 +55,9 @@ static pid_t lastPid;
 static void evaluateIfPossible(Context *context, NSDictionary *options, id <LAOriginatorProt> originator, EvaluationRequest *request, void (^reply)(NSDictionary *, NSError *), void (^fallbackBlock)(void)){
 	
 	PSSeeker *seeker = [PSSeeker new];
-	NSDictionary *wisdom = [seeker getWisdom];
+	NSDictionary *wisdom = [seeker getWisdom:@{
+		@"pid" : @(originator.processId)
+	}];
 	
 	if (wisdom){
 		
@@ -69,6 +71,7 @@ static void evaluateIfPossible(Context *context, NSDictionary *options, id <LAOr
 		BOOL advertisedBanner = [wisdom[@"banner"] boolValue];
 		BOOL advertisedUnlockApps = [wisdom[@"unlockApps"] boolValue];
 		BOOL advertisedinSession = [wisdom[@"inSession"] boolValue];
+		BOOL advertisedAppBlacklisted = [wisdom[@"appBlacklisted"] boolValue];
 		
 		/*
 		 HBLogDebug(@"advertisedPerseus: %@", advertisedPerseus);
@@ -84,21 +87,21 @@ static void evaluateIfPossible(Context *context, NSDictionary *options, id <LAOr
 		 */
 		
 		
-		if (advertisedEnabled && advertisedUnlockApps && (advertisedUnlockedWithPerseus || advertisedinSession) && advertisedPerseus.length > 0 && advertisedHarpe.length > 0){
+		if (advertisedEnabled && advertisedUnlockApps && !advertisedAppBlacklisted && (advertisedUnlockedWithPerseus || advertisedinSession) && advertisedPerseus.length > 0 && advertisedHarpe.length > 0){
 			
 			__weak typeof(context) weakSelf = context;
 			
-			sendGeneralPerseusQueryWithReply(advertisedFastUnlock, ^(xpc_object_t vxReply){
-				BOOL onWrist = xpc_dictionary_get_int64(vxReply, "pairedWatchWristState") == 3;
-				BOOL securelyUnlocked = xpc_dictionary_get_int64(vxReply, "pairedWatchLockState") == 0;
-				BOOL isNearby = xpc_dictionary_get_bool(vxReply, "nearby");
-				BOOL isActive = xpc_dictionary_get_bool(vxReply, "active");
-				BOOL isConnected = xpc_dictionary_get_bool(vxReply, "connected");
-				int64_t rssi = xpc_dictionary_get_int64(vxReply, "rssi");
+			sendGeneralPerseusQueryWithReply(advertisedFastUnlock, ^(xpc_object_t psReply){
+				BOOL onWrist = xpc_dictionary_get_int64(psReply, "pairedWatchWristState") == 3;
+				BOOL securelyUnlocked = xpc_dictionary_get_int64(psReply, "pairedWatchLockState") == 0;
+				BOOL isNearby = xpc_dictionary_get_bool(psReply, "nearby");
+				BOOL isActive = xpc_dictionary_get_bool(psReply, "active");
+				BOOL isConnected = xpc_dictionary_get_bool(psReply, "connected");
+				int64_t rssi = xpc_dictionary_get_int64(psReply, "rssi");
 				
 				/*
-				 HBLogDebug(@"pairedWatchWristState: %lld", xpc_dictionary_get_int64(vxReply, "pairedWatchWristState"));
-				 HBLogDebug(@"pairedWatchLockState: %lld", xpc_dictionary_get_int64(vxReply, "pairedWatchLockState"));
+				 HBLogDebug(@"pairedWatchWristState: %lld", xpc_dictionary_get_int64(psReply, "pairedWatchWristState"));
+				 HBLogDebug(@"pairedWatchLockState: %lld", xpc_dictionary_get_int64(psReply, "pairedWatchLockState"));
 				 HBLogDebug(@"nearby: %d", isNearby?1:0);
 				 HBLogDebug(@"active: %d", isActive?1:0);
 				 HBLogDebug(@"connected: %d", isConnected?1:0);
@@ -113,7 +116,6 @@ static void evaluateIfPossible(Context *context, NSDictionary *options, id <LAOr
 					if (!error){
 						
 						NSString *passcode =  [[NSString alloc] initWithData:decryptedPerseus encoding:NSUTF8StringEncoding];
-						
 						
 						if ([%c(LAUtils) isMultiUser]){
 							int status = kMobileKeyBagError;
@@ -137,10 +139,9 @@ static void evaluateIfPossible(Context *context, NSDictionary *options, id <LAOr
 							result[@(kLAResultPassedPasscode)] = @YES;
 							result[@(kLAResultPassedBiometry)] = @YES;
 							
-							NSError *bioHashErr = nil;
-							NSData *bioHash = [[%c(BiometryHelper) sharedInstance] biometryDatabaseHashForUser:username(originator.userId) error:&bioHashErr];
-							if (bioHash && !bioHashErr){
-								result[@(kLAResultBiometryDatabaseHash)] = bioHash;
+							NSData *bioDatHash = [[%c(BiometryHelper) sharedInstance] biometryDatabaseHashForUser:username(originator.userId) error:&error];
+							if (bioDatHash && !error){
+								result[@(kLAResultBiometryDatabaseHash)] = bioDatHash;
 							}else{
 								return fallbackBlock();
 							}
@@ -179,18 +180,16 @@ static void evaluateIfPossible(Context *context, NSDictionary *options, id <LAOr
 
 -(void)evaluatePolicy:(LAPolicy)policy options:(NSDictionary *)options uiDelegate:(id <LAUIDelegate>)delegate originator:(id <LAOriginatorProt>)originator request:(EvaluationRequest *)request reply:(void (^)(NSDictionary *, NSError *))reply{
 	
-	HBLogDebug(@"evaluatePolicy interactive: %d", request.interactive?1:0);
 	void (^originalExecution)() = ^(){
 		%orig(policy, options, delegate, originator, request, reply);
 	};
-	if (request.interactive){
+	if (request.interactive && policy != kLAPolicySoftwareUpdate){
 		if ((delegate || [self _hasProtectedOptions:options]) && ![originator checkEntitlement:@"com.apple.private.CoreAuthentication.SPI"]){
 			return originalExecution();
 		}
 		NSDictionary *updatedOptions = [self _updateOptionsWithServerProperties:options];
-		[request updateOptions:options];
-		HBLogDebug(@"evaluatePolicy options: %@", options);
-		HBLogDebug(@"evaluatePolicy updatedOptions: %@", updatedOptions);
+		[request updateOptions:updatedOptions];
+		if (request.isApplePay || request.isInAppPayment) return originalExecution();
 		evaluateIfPossible(self, updatedOptions, originator, request, reply, originalExecution);
 	}else{
 		originalExecution();
@@ -228,7 +227,6 @@ static void evaluateIfPossible(Context *context, NSDictionary *options, id <LAOr
 	if ([[bleDevice valueForKey:@"_advertisementFields"][@"model"] hasPrefix:@"Watch"] && bleDevice.paired){
 		cachedRssi = bleDevice.rssi;
 		currentRssi = bleDevice.rssi;
-		
 	}
 	%orig;
 }
@@ -446,7 +444,7 @@ static void screenUndimmed(){
 					CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)screenUndimmed, (CFStringRef)SCREEN_ON_NN, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 					CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)forceLockDeviceIfNecessary, (CFStringRef)FORCE_LOCK_NN, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 					
-					notify_register_dispatch("com.apple.springboard.lockstate", &lockStateNotifyToken, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^(int token){
+					notify_register_dispatch(LOCKSTATE_NN, &lockStateNotifyToken, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^(int token){
 						uint64_t state = UINT64_MAX;
 						notify_get_state(token, &state);
 						if (state == 0){

@@ -330,6 +330,8 @@
 @property (nonatomic,readonly) BOOL isUnlock;
 @property (nonatomic,readonly) long long purpose;
 @property (nonatomic,readonly) long long policy;
+@property (nonatomic,readonly) BOOL isInAppPayment;
+@property (nonatomic,readonly) BOOL isApplePay;
 -(id)initWithAcl:(id)arg1 operation:(id)arg2 options:(id)arg3 ;
 -(id)initWithPolicy:(long long)arg1 options:(id)arg2 ;
 -(void)updateOptions:(id)arg1 ;
@@ -427,6 +429,9 @@ int MKBUnlockDevice(CFDataRef passcode, CFDictionaryRef options);
 #endif
 
 //LAContext
+//Policy
+#define kLAPolicySoftwareUpdate                         1010
+
 //Options
 #define kLAOptionUserFallback                   1
 #define kLAOptionAuthenticationReason           2

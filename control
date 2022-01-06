@@ -1,11 +1,11 @@
 Package: com.udevs.perseus
 Name: Perseus
-Version: 1.4.0
+Version: 1.4.1
 Architecture: iphoneos-arm
 Description: Unlock iPhone with Apple Watch
 Maintainer: udevs
 Author: udevs
 Section: Tweaks
-Depends: mobilesubstrate (>= 0.9.5000), firmware(>=13.0), com.udevs.vexillarius, com.rpetrich.rocketbootstrap (>= 1.0.2)
+Depends: mobilesubstrate (>= 0.9.5000), firmware(>=13.0), com.udevs.vexillarius | firmware(<<14.0), com.rpetrich.rocketbootstrap (>= 1.0.2), com.opa334.altlist
 Icon: https://udevsharold.github.io/repo/depictions/com.udevs.perseus/icon/icon.png
 Depiction: https://udevsharold.github.io/repo/depictions/?p=com.udevs.perseus
