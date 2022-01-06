@@ -369,6 +369,7 @@ static void reloadPrefs(){
 	deferBioFailureVibration = [valueForKey(@"deferBioFailureVibration") ?: @YES boolValue];
 	pokeType = [valueForKey(@"pokeType") ?: @(PSPokeGizmoTypeOnce) intValue];
 	unlockApps = [valueForKey(@"unlockApps") ?: @YES boolValue];
+	[[PSNymph sharedInstance] updateBlacklistedApps];
 	
 	if (!enabled){
 		perseus = nil;
@@ -434,7 +435,6 @@ static void screenUndimmed(){
 				
 				if (isSpringBoard){
 					reloadPrefs();
-					[PSNymph sharedInstance];
 					//Ensure connection
 					gizmoStateChanged();
 					%init(SpringBoard);
@@ -453,15 +453,11 @@ static void screenUndimmed(){
 							inSession = NO;
 						}
 					});
-				}
-				
-				if (isSharingd){
+				}else if (isSharingd){
 					%init(Sharingd);
 					[PSGizmoStateObserver sharedInstance];
 					
-				}
-				
-				if (isCoreauthd){
+				}else if (isCoreauthd){
 					%init(Coreauthd);
 				}
 				

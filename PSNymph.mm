@@ -28,6 +28,7 @@ extern __strong NSString **harpePtr;
 	static dispatch_once_t token = 0;
 	dispatch_once(&token, ^{
 		sharedInstance = [self new];
+		[sharedInstance updateBlacklistedApps];
 	});
 	return sharedInstance;
 }
@@ -50,10 +51,13 @@ extern __strong NSString **harpePtr;
 	return self;
 }
 
+-(void)updateBlacklistedApps{
+	_blacklistedApps = valueForKey(@"appsUnlockBlacklistedApps");
+}
+
 -(BOOL)_isAppBlacklisted:(NSString *)bundleIdentifier{
 	if (!bundleIdentifier) return NO;
-	NSArray *appsUnlockBlacklistedApps = valueForKey(@"appsUnlockBlacklistedApps");
-	return [appsUnlockBlacklistedApps containsObject:bundleIdentifier];
+	return [_blacklistedApps containsObject:bundleIdentifier];
 }
 
 -(NSString *)_bundleIdentifierFromUserInfo:(NSDictionary *)userInfo{

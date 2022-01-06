@@ -68,6 +68,7 @@
 		[blacklistAppsSpec setProperty:@YES forKey:@"hideSearchBarWhileScrolling"];
 		[blacklistAppsSpec setProperty:@YES forKey:@"alphabeticIndexingEnabled"];
 		[blacklistAppsSpec setProperty:@YES forKey:@"includeIdentifiersInSearch"];
+		[blacklistAppsSpec setProperty:PREFS_CHANGED_NN forKey:@"PostNotification"];
 		[rootSpecifiers addObject:blacklistAppsSpec];
 		
         //Banner

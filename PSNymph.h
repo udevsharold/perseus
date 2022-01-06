@@ -29,6 +29,8 @@ typedef NS_ENUM(NSInteger, PSNymphBannerOption){
 @interface PSNymph : NSObject{
 	CPDistributedMessagingCenter * _messagingCenter;
 	pid_t _processId;
+	NSArray *_blacklistedApps;
 }
 +(instancetype)sharedInstance;
+-(void)updateBlacklistedApps;
 @end
